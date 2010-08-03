@@ -4,9 +4,7 @@
   Estimating posterior model probabilities
 }
 \description{
-  This function performs a simple rejection or a multinomial logistic regression
-  to estimate the posterior probability of a model relative to the other
-  models in consideration. 
+ Model selection in Approximate Bayesian Computation.
 }
 \usage{
 postpr(target, index, sumstat, tol, subset = NULL, method,
@@ -67,7 +65,7 @@ c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
   
   The returned value is an object of class \code{"postpr"}, containing the
   following components:
-  \item{probs}{a vector of model probabilities.}
+  \item{pred}{a vector of model probabilities.}
   \item{values}{the vector of model indices in the accepted region
     using method=\code{"rejection"}.}
   \item{weights}{vector of regression weights.}
@@ -84,8 +82,8 @@ c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
 }
 \details{
 
-  A model with the highest posterior probability is selected from a
-  finite subset of candidate models. Simulations have to be performed
+  The function computes the posterior model probabilities.
+  Simulations have to be performed
   with at least two distinct models. When method is \code{"rejection"},
   the posterior probability of a given model is approximated by the
   proportion of accepted simulations given this model. This

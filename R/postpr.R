@@ -41,6 +41,7 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
   if(missing(subset)) subset <- rep(TRUE,length(sumstat[,1]))
   gwt <- as.logical(gwt*subset)
   
+  sumstat<-as.data.frame(sumstat)
   ## extract names of statistics if given
   ## ####################################
   nss <- length(sumstat[1,])
@@ -93,6 +94,7 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
   ## ##################################
   ss <- scaled.sumstat[wt1,]
   values <- index[wt1]
+  pred<-table(values)/length(values)
 
   statvar <- as.logical(apply(scaled.sumstat[wt1,], 2, function(x) length(unique(x))-1))
   cond2 <- !any(statvar)
@@ -107,7 +109,6 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
     if(cond2) warning("Zero variance in the summary statistics in the selected region. Check summary statistics, consider larger tolerance.")
     weights <- NULL
     pred.logit <- NULL
-    pred <- NULL
   }
 
   ## regression correction
@@ -128,11 +129,12 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
     ok <- index[wt1] # models accepted
     fml <- as.formula(paste("ok ~ ", paste(statnames, collapse= "+")))
       
-    if(length(unique(ok)) == 1){
-      warning("Only one model is accepted, no regression is performed, method is set to rejection.")
+    if ( length(unique(ok)) < length(mymodels)) {
+      warning(paste("There are",length(mymodels),"models but only",length(unique(ok)), "for which simulations have been accepted.\nNo regression is performed, method is set to rejection.\nConsider increasing the tolerance rate"),sep="")
       weights <- NULL
       pred.logit <- NULL
-      pred <- NULL
+      method <- "rejection"
+      
     }
       
     else if(method == "mnlogistic"){
@@ -141,13 +143,8 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
       names(target) <- statnames
       pred <- predict(fit1, target, type="probs")
       if(length(pred) == 1){
-        temp <- rep(0, length(mymodels))
-        names(temp) <- mymodels
-        pred.mod <- predict(fit1, target)
-        pred.names <- levels(pred.mod)
-        temp[as.character(pred.mod)] <- pred
-        temp[pred.names[-match(as.character(pred.mod), pred.names)]] <- 1-pred
-        pred <- temp
+        pred<-c(1-pred,pred)
+        names(pred)<-levels(ok)
       }
     }
     
@@ -159,13 +156,24 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
       for(i in 1:numnet){
         fit1 <- nnet(fml, data=ss, weights = weights, decay = lambda[i],
                      size = sizenet, trace = trace, linout = linout, maxit = maxit, ...)
-        pred <- pred + predict(fit1, target, type="raw")
+        if(length(mymodels)==2)
+        {
+        	auxm<-predict(fit1, target, type="raw")
+        	pred <- pred + c(1-auxm,auxm)
+        }
+        else
+        	pred <- pred + predict(fit1, target, type="raw")
       }
       pred <- pred/numnet
-      temp <- rep(0, length(mymodels))
-      names(temp) <- mymodels
-      temp[match(colnames(pred), mymodels)] <- pred
-      pred <- temp
+      if(length(mymodels)!=2)
+	  {
+      		temp <- rep(0, length(mymodels))
+      		names(temp) <- mymodels
+      		temp[match(colnames(pred), mymodels)] <- pred
+      		pred <- temp
+      }
+      else
+      	names(pred) <- levels(ok)
     }
   }
   
@@ -187,9 +195,11 @@ summary.postpr <- function(object, rejection = TRUE, ...){
   npost <- length(postpr.out$values)
   pred <- postpr.out$pred
   allvals <- postpr.out$values
-  nzvals <- factor(postpr.out$values)
-  postmod <- levels(nzvals)
-  nmod <- length(levels(nzvals))
+  nzvals <- (postpr.out$values)
+
+  postmod <- levels(postpr.out$values)
+  nmod <- length(postmod)
+  
   method <- postpr.out$method
 
   cat("Call: \n")
