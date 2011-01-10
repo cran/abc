@@ -10,25 +10,34 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
   ## general checks that the function is used correctly
   ## o###################################################
 
-  if(missing(target)) stop("'target' is missing")
-  if(missing(index)) stop("'index' is missing")
-  if(missing(sumstat)) stop("'sumstat' is missing")
-  if(missing(tol)) stop("'tol' is missing")
-  if(missing(method)) stop("'method' is missing with no default")  
-  if(!any(method == c("rejection", "mnlogistic", "neuralnet"))) stop("Method must be 'rejection', 'mnlogistic' or 'neuralnet'.")
-  if(length(index) != length(sumstat[,1])) stop("'index' must be the same length as the number of rows in 'sumstat'.")
-  if(length(unique(index)) == 1) stop("At least two different models must be given.")
-     
+  if(missing(target)) stop("'target' is missing with no default", call.=F)
+  if(missing(index)) stop("'index' is missing with no default", call.=F)
+  if(missing(sumstat)) stop("'sumstat' is missing with no default", call.=F)
+  if(!is.vector(index)) stop("'index' has to be a vector.", call.=F)
+  if(!is.matrix(sumstat) && !is.data.frame(sumstat) && !is.vector(sumstat)) stop("'sumstat' has to be a matrix, data.frame or vector.", call.=F)
+  if(missing(tol)) stop("'tol' is missing with no default", call.=F)
+  if(missing(method)) stop("'method' is missing with no default", call.=F)
+  if(!any(method == c("rejection", "mnlogistic", "neuralnet")))
+    stop("Method must be 'rejection', 'mnlogistic' or 'neuralnet'.", call.=F)
+  if(length(unique(index)) == 1)
+    stop("At least two different models must be given.", call.=F)
   if(method == "rejection") rejmethod <- TRUE
   else rejmethod <- FALSE
 
+  if(is.data.frame(sumstat)) sumstat <- as.matrix(sumstat)
+  if(is.vector(sumstat)) sumstat <- matrix(sumstat, ncol=1)
+  if(is.list(target)) target <- unlist(target)
+  if(length(target)!=dim(sumstat)[2]) stop("Number of summary statistics in 'target' has to be the same as in 'sumstat'.", call.=F)
+  if(length(index) != length(sumstat[,1]))
+    stop("'index' must be the same length as the number of rows in 'sumstat'.", call.=F)
+  
   if(!any(kernel == c("gaussian", "epanechnikov", "rectangular", "triangular", "biweight", "cosine"))){
     kernel <- "epanechnikov"
-    warning("Kernel is incorrectly defined. Setting to default (Epanechnikov)")
+    warning("Kernel is incorrectly defined. Setting to default kernel (Epanechnikov)", call.=F, immediate=T)
   }
   
   if(is.vector(sumstat)) sumstat <- matrix(sumstat, ncol=1)
-  if(length(target)!=dim(sumstat)[2]) stop("Number of summary statistics in 'target' has to be the same as in 'sumstat'.")
+  if(length(target)!=dim(sumstat)[2]) stop("Number of summary statistics in 'target' has to be the same as in 'sumstat'.", call.=F)
   
   index <- as.factor(index)
   mymodels <- levels(index)
@@ -38,7 +47,7 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
   #########################################################
   gwt <- rep(TRUE,length(sumstat[,1]))
   gwt[attributes(na.omit(sumstat))$na.action] <- FALSE
-  if(missing(subset)) subset <- rep(TRUE,length(sumstat[,1]))
+  if(is.null(subset)) subset <- rep(TRUE,length(sumstat[,1]))
   gwt <- as.logical(gwt*subset)
   
   sumstat<-as.data.frame(sumstat)
@@ -46,7 +55,7 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
   ## ####################################
   nss <- length(sumstat[1,])
   if(!length(colnames(sumstat))){
-    warning("No summary statistics names are given, using S1, S2, ...")
+    warning("No summary statistics names are given, using S1, S2, ...", call.=F, immediate=T)
     statnames <- paste("S", 1:nss, sep="")
   }
   else statnames <- colnames(sumstat)
@@ -54,9 +63,9 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
   ## stop if zero var in sumstat
   ## ###########################
   cond1 <- as.logical(apply(sumstat, 2, function(x) length(unique(x))-1))
-  if(!all(cond1)) stop("Summary statistic(s) have zero variance.")
+  if(!all(cond1)) stop("Summary statistic(s) have zero variance.", call.=F)
   if(!any(cond1)){
-    warning("Statistic(s) ", statnames[!cond1], " have zero variance. Excluding from estimation....", sep="\t")
+    warning("Statistic(s) ", statnames[!cond1], " have zero variance. Excluding from estimation....", sep="\t", call.=F, immediate=T)
     sumstat <- sumstat[,cond1]
     nss <- length(sumstat[1,])
     statnames <- colnames(sumstat)
@@ -94,19 +103,19 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
   ## ##################################
   ss <- scaled.sumstat[wt1,]
   values <- index[wt1]
-  pred<-table(values)/length(values)
+  pred <- table(values)/length(values)
 
-  statvar <- as.logical(apply(scaled.sumstat[wt1,], 2, function(x) length(unique(x))-1))
+  statvar <- as.logical(apply(scaled.sumstat[wt1, , drop=FALSE], 2, function(x) length(unique(x))-1))
   cond2 <- !any(statvar)
   
   if(cond2 && !rejmethod)
-    stop("Zero variance in the summary statistics in the selected region.\nTry: checking summary statistics, choosing larger tolerance, or rejection method.")
+    stop("Zero variance in the summary statistics in the selected region.\nTry: checking summary statistics, choosing larger tolerance, or rejection method.", call.=F)
 
   
   ## if simple rejection or in the selected region there is no var in sumstat
   ## #########################################################################
   if(rejmethod){
-    if(cond2) warning("Zero variance in the summary statistics in the selected region. Check summary statistics, consider larger tolerance.")
+    if(cond2) warning("Zero variance in the summary statistics in the selected region. Check summary statistics, consider larger tolerance.", call.=F, immediate=T)
     weights <- NULL
     pred.logit <- NULL
   }
@@ -130,11 +139,10 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
     fml <- as.formula(paste("ok ~ ", paste(statnames, collapse= "+")))
       
     if ( length(unique(ok)) < length(mymodels)) {
-      warning(paste("There are",length(mymodels),"models but only",length(unique(ok)), "for which simulations have been accepted.\nNo regression is performed, method is set to rejection.\nConsider increasing the tolerance rate"),sep="")
+      warning(paste("There are",length(mymodels),"models but only",length(unique(ok)), "for which simulations have been accepted.\nNo regression is performed, method is set to rejection.\nConsider increasing the tolerance rate."),sep="", call.=F, immediate=T)
       weights <- NULL
       pred.logit <- NULL
       method <- "rejection"
-      
     }
       
     else if(method == "mnlogistic"){

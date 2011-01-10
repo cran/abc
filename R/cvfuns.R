@@ -10,9 +10,9 @@ cv4abc <- function(param, sumstat, abc.out = NULL, nval, tols,
   ## checks:
   ## ########
   if(!any(statistic == c("median", "mean", "mode"))){
-    stop("Statistic has to be mean, median or mode.")
+    stop("Statistic has to be mean, median or mode.", call.=F)
   }
-  if(is.null(abc.out) && missing(method)) stop("Method must be supplied when 'abc.out' is NULL.")
+  if(is.null(abc.out) && missing(method)) stop("Method must be supplied when 'abc.out' is NULL.", call.=F)
   
   ## set random seeds
   ## ################
@@ -22,7 +22,7 @@ cv4abc <- function(param, sumstat, abc.out = NULL, nval, tols,
   ## define defaults:
   ## #################
   
-  if(!missing(abc.out)){
+  if(!is.null(abc.out)){
     subset <- abc.out$na.action
     method <- abc.out$method
     transf <- abc.out$transf
@@ -44,15 +44,15 @@ cv4abc <- function(param, sumstat, abc.out = NULL, nval, tols,
   numsim <- dim(param)[1]
 
   # paramnames & statnames 
-  if(!missing(abc.out)){ # paramnames & statnames from abc.out
+  if(!is.null(abc.out)){ # paramnames & statnames from abc.out
     if(np != abc.out$numparam || numstat != abc.out$numstat || numsim != length(abc.out$na.action)){
-      stop("The number of parameters, summary statistics, or simulations provided in 'param' or 'sumstat' are not the same as in 'abc.out'.")
+      stop("The number of parameters, summary statistics, or simulations provided in 'param' or 'sumstat' are not the same as in 'abc.out'.", call.=F)
     }
     else if(!prod(colnames(param) %in% abc.out$names$parameter.names)){
-      stop("Parameters in 'param' are not the same as in 'abc.out', or different names are used.")
+      stop("Parameters in 'param' are not the same as in 'abc.out', or different names are used.", call.=F)
     }
     else if(!prod(colnames(sumstat) %in% abc.out$names$statistics.names)){
-      stop("Summary statistics in 'sumstat' are not the same as in 'abc.out', or different names are used.")
+      stop("Summary statistics in 'sumstat' are not the same as in 'abc.out', or different names are used.", call.=F)
     }
     else{
       paramnames <- abc.out$names$parameter.names
@@ -64,14 +64,14 @@ cv4abc <- function(param, sumstat, abc.out = NULL, nval, tols,
       paramnames <- colnames(param)
     }
     else{
-      warning("No parameter names are given, using P1, P2, ...")
+      warning("No parameter names are given, using P1, P2, ...", call.=F, immediate=T)
       paramnames <- paste("P", 1:np, sep="")
     }
     if(length(colnames(sumstat))){
       statnames <- colnames(sumstat)
     }
     else{
-      warning("No statistics names are given, using S1, S2, ...")
+      warning("No statistics names are given, using S1, S2, ...", call.=F, immediate=T)
       statnames <- paste("S", 1:numstat, sep="")
     }
   }
@@ -79,7 +79,7 @@ cv4abc <- function(param, sumstat, abc.out = NULL, nval, tols,
   # indexes for the CV sample and check that the sample is not actually an NA
   gwt <- rep(TRUE,length(sumstat[,1]))
   gwt[attributes(na.omit(sumstat))$na.action] <- FALSE
-  if(!length(subset)) subset <- rep(TRUE,length(sumstat[,1]))
+  if(is.null(subset)) subset <- rep(TRUE,length(sumstat[,1]))
   gwt <- as.logical(gwt*subset)
   cvsamp <- sample(1:numsim, nval, prob = gwt/sum(gwt))
 
@@ -141,8 +141,8 @@ plot.cv4abc <- function(x, exclude = NULL, log = NULL, file = NULL, postscript =
   cv4abc.out$estim <- as.data.frame(cv4abc.out$estim)
   nval <- length(true)/np
 
-  if(missing(log)) log <- rep("", each=np)
-  else if(length(log) != np) stop("error in argument 'log': provide scale for all parameters.")
+  if(is.null(log)) log <- rep("", each=np)
+  else if(length(log) != np) stop("error in argument 'log': provide scale for all parameters.", call.=F)
   
   if(is.null(caption)) caption <- as.graphicsAnnot(parnames)
   
@@ -153,14 +153,14 @@ plot.cv4abc <- function(x, exclude = NULL, log = NULL, file = NULL, postscript =
   ## ##########
   save.devAskNewPage <- devAskNewPage()
   if(!is.null(file)){
-    file <- substitute(file)
-    if(!postscript) pdf(file = paste(file, "pdf", sep="."), onefile=onefile)
-    if(postscript) postscript(file = paste(file, "ps", sep="."), onefile=onefile)
+      file <- substitute(file)
+      if(!postscript) pdf(file = paste(file, "pdf", sep="."), onefile=onefile)
+      if(postscript) postscript(file = paste(file, "ps", sep="."), onefile=onefile)
   }
   else{
-    if (ask && 1 < np) {
-      devAskNewPage(TRUE)
-    }
+      if (ask && 1 < np) {
+          devAskNewPage(TRUE)
+      }
   }
   
   par(cex = 1, cex.main = 1.2, cex.lab = 1.1)
@@ -169,7 +169,7 @@ plot.cv4abc <- function(x, exclude = NULL, log = NULL, file = NULL, postscript =
     mylog <- log[par]
     columns <- seq(par, numtols*np, by=np)
 
-    if(!missing(exclude)) plot(rep(cv4abc.out$true[-exclude,par], times=numtols),
+    if(!is.null(exclude)) plot(rep(cv4abc.out$true[-exclude,par], times=numtols),
                                unlist(cv4abc.out$estim[-exclude,columns]),
                                col = rep(cols, each=nval),
                                pch = pch, log=mylog,

@@ -144,6 +144,10 @@ europe <- postpr(tajima.obs["Italian",], models, tajima.sim, tol=.01, method="mn
 summary(europe)
 asia <- postpr(tajima.obs["Chinese",], models, tajima.sim, tol=.01, method="mnlogistic")
 summary(asia)
+
+ss <- cbind(runif(1000),rt(1000,df=20))
+postpr(target=c(3), index=c(rep("norm",500),rep("t",500)), sumstat=ss[,1], tol=.1, method="rejection")
+
 }
 \keyword{htest}
 \keyword{models}

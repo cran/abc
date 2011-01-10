@@ -5,7 +5,7 @@
 # Unlimited distribution is permitted
 
 abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
-                transf = "none", logit.bounds = c(0,0), subset = NULL, kernel = "epanechnikov",
+                transf = "none", logit.bounds = NULL, subset = NULL, kernel = "epanechnikov",
                 ## additional parameters if method = "neuralnet"
                 numnet = 10, sizenet = 5, lambda = c(0.0001,0.001,0.01), trace = FALSE, maxit = 500, ...){ 
     
@@ -14,72 +14,95 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     ## general checks that the function is used correctly
     ## ###################################################
     
-    if(missing(target)) stop("'target' is missing")
-    if(missing(param)) stop("'param' is missing")
-    if(missing(sumstat)) stop("'sumstat' is missing")
-    if(!is.matrix(param) && !is.data.frame(param) && !is.vector(param)) stop("'param' has to be a matrix, data.frame or vector.")
-    if(!is.matrix(sumstat) && !is.data.frame(sumstat) && !is.vector(sumstat)) stop("'sumstat' has to be a matrix, data.frame or vector.")
-    if(missing(tol)) stop("'tol' is missing")
-    if(missing(method)) stop("'method' is missing with no default")  
-    if(!any(method == c("rejection", "loclinear", "neuralnet"))){
-        stop("Method must be rejection, loclinear, or neuralnet")
-    }
+    if(missing(target)) stop("'target' is missing with no default", call.=F)
+    if(missing(param)) stop("'param' is missing with no default", call.=F)
+    if(missing(sumstat)) stop("'sumstat' is missing with no default", call.=F)
+    if(!is.matrix(param) && !is.data.frame(param) && !is.vector(param)) stop("'param' has to be a matrix, data.frame or vector.", call.=F)
+    if(!is.matrix(sumstat) && !is.data.frame(sumstat) && !is.vector(sumstat)) stop("'sumstat' has to be a matrix, data.frame or vector.", call.=F)
+    if(missing(tol)) stop("'tol' is missing with no default", call.=F)
+    if(missing(method)) stop("'method' is missing with no default", call.=F)
+    if(!any(method == c("rejection", "loclinear", "neuralnet")))
+        stop("Method must be rejection, loclinear, or neuralnet", call.=F)
     if(method == "rejection") rejmethod <- TRUE
     else rejmethod <- FALSE
     
     if(!any(kernel == c("gaussian", "epanechnikov", "rectangular", "triangular", "biweight", "cosine"))){
         kernel <- "epanechnikov"
-        warning("Kernel is incorrectly defined. Setting to default (Epanechnikov)")
+        warning("Kernel is incorrectly defined. Setting to default (Epanechnikov)", call.=F, immediate.=T)
     }
 
     if(is.data.frame(param)) param <- as.matrix(param)
     if(is.data.frame(sumstat)) sumstat <- as.matrix(sumstat)
     if(is.list(target)) target <- unlist(target)
     if(is.vector(sumstat)) sumstat <- matrix(sumstat, ncol=1)
-    if(length(target)!=dim(sumstat)[2]) stop("Number of summary statistics in 'target' has to be the same as in 'sumstat'.")
+    if(length(target)!=dim(sumstat)[2]) stop("Number of summary statistics in 'target' has to be the same as in 'sumstat'.", call.=F)
     
     ## stop if zero var in sumstat
     ## #########################
     nss <- length(sumstat[1,])
     cond1 <- !any(as.logical(apply(sumstat, 2, function(x) length(unique(x))-1)))
-    if(cond1) stop("Zero variance in the summary statistics.")
-    
-    
-    ## transformations
-    ## ################
-    ltransf <- length(transf)
+    if(cond1) stop("Zero variance in the summary statistics.", call.=F)
+
+    ## numparam
     if(is.vector(param)){
         numparam <- 1
         param <- matrix(param, ncol=1)
     }
     else numparam <- dim(param)[2]
-    for (i in 1:ltransf){
-        if(sum(transf[i] == c("none","log","logit")) == 0){
-            stop("Transformations must be none, log, or logit.")
-        }
-        if(transf[i]=="logit"){
-            if(logit.bounds[1] >= logit.bounds[2]){
-                stop("Logit bounds are incorrect.")       
-            }
-        }
-    }
-    ## if no logit change logit.bounds to NULL
-    ## if(any(transf) == "logit") logit.bounds <- NULL
+
+    ## transformations
+    ## ################
+    ltransf <- length(transf)
+
+    if(!prod(unique(transf) %in% c("none","log","logit")))
+        stop("Transformations must be none, log, or logit.", call.=F)
     
     ## no transformation should be applied when rejmethod is true
     if(rejmethod){
         if(!all(transf == "none")){
-            warning("No transformation is applied when the simple rejection is used.", call.=F)
+            warning("No transformation is applied when the simple rejection is used.", call.=F, immediate.=T)
         }
         transf[1:numparam] <- "none"
     }
     else{
+        if("logit" %in% transf & is.null(logit.bounds)) stop("Define logit bounds for each parameter (NA's for parameters that are not to be \"logit\" transformed).", call.=F)
+        else if ("logit" %in% transf & length(logit.bounds)==2) logit.bounds <- matrix(logit.bounds, ncol=2)
         if(numparam != ltransf){
-            if(length(transf) == 1){
-                transf <- rep(transf[1], numparam)
-                warning("All parameters are \"", transf[1], "\" transformed.", sep="", call.=F)
+            ## transf has only one value
+            if(ltransf == 1){
+                if(transf == "log"){
+                    transf <- rep(transf[1], numparam)
+                    warning("All parameters will be \"log\" transformed.", call.=F, immediate.=T)
+                }
+                if(transf=="none"){
+                    transf <- rep(transf[1], numparam)
+                    warning("None of the parameters will be transformed.", call.=F, immediate.=T)
+                }
+                if(transf=="logit" & dim(logit.bounds)[1]==numparam){
+                    transf <- rep(transf[1], numparam)
+                    ltransf <- numparam
+                    warning("All parameters will be \"logit\" transformed with their corresponding logit bounds.", call.=F, immediate.=T)
+                }
+                else if(transf=="logit" & length(logit.bounds)==2){
+                    transf <- rep(transf[1], numparam)
+                    ltransf <- numparam
+                    logit.bounds <- matrix(logit.bounds, ncol=2, nrow=numparam, byrow=T)
+                    warning("All parameters will be \"logit\" transformed with the same given logit bounds.", call.=F, immediate.=T)
+                }
             }
-            else stop("Number of parameters is not the same as number of transformations.", sep="", call.=F)
+            else stop("Number of transformations must be the same as the number of parameters.", call.=F)
+        }
+        if("logit" %in% transf){
+            if(is.null(logit.bounds)) stop("Define logit bounds for each parameter (NA's for parameters that are not to be \"logit\" transformed).", call.=F)
+            else if (dim(logit.bounds)[1]!=numparam)
+                stop("Matrix logit bounds must have as many lines as parameters.", call.=F)
+            for (i in 1:ltransf){
+                if(transf[i]=="logit"){
+                    if(sum(is.na(logit.bounds[i,]))) stop("Logit bounds cannot be NA for a parameter that is to be \"logit\" transformed.", call.=F)
+                    if(logit.bounds[i,1] >= logit.bounds[i,2]) stop("Logit bounds are incorrect for one or more parameter(s). The 1st bound must be larger or equal to the 2nd bound.", call.=F)
+                }
+                else logit.bounds[i,] <- c(NA, NA)
+            }
         }
     }
     
@@ -87,19 +110,19 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     ## #######################################################
     gwt <- rep(TRUE,length(sumstat[,1]))
     gwt[attributes(na.omit(sumstat))$na.action] <- FALSE
-    if(missing(subset)) subset <- rep(TRUE,length(sumstat[,1]))
+    if(is.null(subset)) subset <- rep(TRUE,length(sumstat[,1]))
     gwt <- as.logical(gwt*subset)
     
     ## extract names of parameters and statistics if given
     ## ###################################################
     if(!length(colnames(param))){
-        warning("No parameter names are given, using P1, P2, ...")
+        warning("No parameter names are given, using P1, P2, ...", immediate.=T, call.=F)
         paramnames <- paste("P", 1:numparam, sep="")
     }
     else paramnames <- colnames(param)
     
     if(!length(colnames(sumstat))){
-        warning("No summary statistics names are given, using S1, S2, ...")
+        warning("No summary statistics names are given, using S1, S2, ...", immediate.=T, call.=F)
         statnames <- paste("S", 1:nss, sep="")
     }
     else statnames <- colnames(sumstat)
@@ -137,7 +160,7 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     for (i in 1:numparam){
         if(transf[i] == "log"){
             if(min(param[,i]) <= 0){
-                cat("log transform: values out of bounds - correcting...")
+                warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
                 x.tmp <- ifelse(param[,i] <= 0,max(param[,i]),param[,i])
                 x.tmp.min <- min(x.tmp)
                 param[,i] <- ifelse(param[,i] <= 0, x.tmp.min,param[,i])
@@ -145,36 +168,36 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
             param[,i] <- log(param[,i])
         }
         else if(transf[i] == "logit"){
-            if(min(param[,i]) <= logit.bounds[1]){
-                x.tmp <- ifelse(param[,i] <= logit.bounds[1],max(param[,i]),param[,i])
+            if(min(param[,i]) <= logit.bounds[i,1]){
+                x.tmp <- ifelse(param[,i] <= logit.bounds[i,1],max(param[,i]),param[,i])
                 x.tmp.min <- min(x.tmp)
-                param[,i] <- ifelse(param[,i] <= logit.bounds[1], x.tmp.min,param[,i])
+                param[,i] <- ifelse(param[,i] <= logit.bounds[i,1], x.tmp.min,param[,i])
             }
-            if(max(param[,i]) >= logit.bounds[2]){
-                x.tmp <- ifelse(param[,i] >= logit.bounds[2],min(param[,i]),param[,i])
+            if(max(param[,i]) >= logit.bounds[i,2]){
+                x.tmp <- ifelse(param[,i] >= logit.bounds[i,2],min(param[,i]),param[,i])
                 x.tmp.max <- max(x.tmp)
-                param[,i] <- ifelse(param[,i] >= logit.bounds[2], x.tmp.max,param[,i])
+                param[,i] <- ifelse(param[,i] >= logit.bounds[i,2], x.tmp.max,param[,i])
             }
-            param[,i] <- (param[,i]-logit.bounds[1])/(logit.bounds[2]-logit.bounds[1])
+            param[,i] <- (param[,i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
             param[,i] <- log(param[,i]/(1-param[,i]))
         }
     } # end of parameter transformations
     
     ## select summary statistics in region
     ## ###################################
-    ss <- sumstat[wt1,]
+    ss <- scaled.sumstat[wt1,]
     unadj.values <- param[wt1,]
-    
+
     ## if simple rejection or in the selected region there is no var in sumstat
     ## ########################################################################
-    statvar <- as.logical(apply(sumstat[wt1,], 2, function(x) length(unique(x))-1))
+    statvar <- as.logical(apply(scaled.sumstat[wt1, , drop=FALSE], 2, function(x) length(unique(x))-1))
     cond2 <- !any(statvar)
     
     if(cond2 && !rejmethod)
-        stop("Zero variance in the summary statistics in the selected region. Try: checking summary statistics, choosing larger tolerance, or rejection method.")
+        stop("Zero variance in the summary statistics in the selected region. Try: checking summary statistics, choosing larger tolerance, or rejection method.", call.=F)
     
     if(rejmethod){
-        if(cond2) warning("Zero variance in the summary statistics in the selected region. Check summary statistics, consider larger tolerance.")
+        if(cond2) warning("Zero variance in the summary statistics in the selected region. Check summary statistics, consider larger tolerance.", call.=F, immediate.=T)
         weights <- NULL
         adj.values <- NULL
         residuals <- NULL
@@ -196,13 +219,13 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
         ## ######################
         if(method == "loclinear"){
             
-            fit1 <- lsfit(scaled.sumstat[wt1,],param[wt1,],wt=weights)
+            fit1 <- lsfit(ss,unadj.values,wt=weights)
             pred <- t(fit1$coeff) %*% c(1,target)
             pred <- matrix(pred, ncol=numparam, nrow=sum(wt1), byrow=TRUE)
             residuals <- fit1$residuals
             
             if(hcorr == TRUE){
-                fit2 <- lsfit(scaled.sumstat[wt1,],log(fit1$residuals^2),wt=weights)
+                fit2 <- lsfit(ss,log(fit1$residuals^2),wt=weights)
                 pred.sd <- sqrt(exp(t(fit2$coeff) %*% c(1,target)))
                 pred.sd <- matrix(pred.sd, nrow=sum(wt1), ncol=numparam, byrow=T)
                 fv <- sqrt(exp(log(fit1$residuals^2) - fit2$residuals))
@@ -231,25 +254,28 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
             fv <- array(dim=c(sum(wt1), numparam, numnet))
             pred <- matrix(nrow=numparam, ncol=numnet)
             for (i in 1:numnet){
-                fit1 <- nnet(scaled.sumstat[wt1,], param[wt1,], weights = weights, decay = lambda[i],
+                fit1 <- nnet(ss, unadj.values, weights = weights, decay = lambda[i],
                              size = sizenet, trace = trace, linout = linout, maxit = maxit, ...)
                 cat(i)
                 fv[,,i] <- fit1$fitted.values
                 pred[,i] <- predict(fit1, data.frame(rbind(target)))
             }
+            cat("\n")
             pred.med <- apply(pred, 1, median)
             pred.med <- matrix(pred.med, nrow=sum(wt1), ncol=numparam, byrow=T)
             fitted.values <- apply(fv, c(1,2), median)
-            residuals <- param[wt1,] - fitted.values # median of fitted values par nnets for each accepted point and parameter
+            residuals <- unadj.values - fitted.values # median of fitted values par nnets for each accepted point and parameter
             
             if(hcorr == TRUE){
                 pred2 <- matrix(nrow=numparam, ncol=numnet)
                 fv2 <- array(dim=c(sum(wt1), numparam, numnet))
                 for (i in 1:numnet){
-                    fit2 <- nnet(scaled.sumstat[wt1,], log(residuals^2), weights = weights, decay = lambda[i], size = sizenet, trace = FALSE, linout = linout, ...)
+                    fit2 <- nnet(ss, log(residuals^2), weights = weights, decay = lambda[i], size = sizenet, trace = trace, linout = linout, ...)
+                    cat(i)
                     fv2[,,i] <- fit2$fitted.values
                     pred2[,i] <- predict(fit2, data.frame(rbind(target)))
                 }
+                cat("\n")
                 pred.sd <- sqrt(exp(apply(pred2, 1, median)))
                 pred.sd <- matrix(pred.sd, nrow=sum(wt1), ncol=numparam, byrow=T)
                 fv.sd <- sqrt(exp(apply(fv2, c(1,2), median)))
@@ -274,8 +300,10 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     ## ################################
     if(numparam == 1){
         unadj.values <- matrix(unadj.values, ncol=1)
-        adj.values <- matrix(adj.values, ncol=1)
-        residuals <- matrix(residuals, ncol=1)
+        if(!rejmethod){
+            adj.values <- matrix(adj.values, ncol=1)
+            residuals <- matrix(residuals, ncol=1)
+        }
     }
     
     for (i in 1:numparam){
@@ -285,9 +313,9 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
         }
         else if(transf[i] == "logit"){
             unadj.values[,i] <- exp(unadj.values[,i])/(1+exp(unadj.values[,i]))
-            unadj.values[,i] <- unadj.values[,i]*(logit.bounds[2]-logit.bounds[1])+logit.bounds[1]
+            unadj.values[,i] <- unadj.values[,i]*(logit.bounds[i,2]-logit.bounds[i,1])+logit.bounds[i,1]
             adj.values[,i] <- exp(adj.values[,i])/(1+exp(adj.values[,i]))
-            adj.values[,i] <- adj.values[,i]*(logit.bounds[2]-logit.bounds[1])+logit.bounds[1]
+            adj.values[,i] <- adj.values[,i]*(logit.bounds[i,2]-logit.bounds[i,1])+logit.bounds[i,1]
         }
     }
     
@@ -331,7 +359,7 @@ is.abc <- function(x){
 
 print.abc <- function(x, ...){
     if (!inherits(x, "abc")) 
-      stop("use only with objects of class \"abc\"")
+      stop("Use only with objects of class \"abc\".", call.=F)
     abc.out <- x
   cl <- abc.out$call
   cat("Call:\n")
@@ -368,7 +396,7 @@ summary.abc <- function(object, unadj = FALSE, intvl = .95, print = TRUE, digits
 
   x <- object
     if (!inherits(x, "abc")) 
-      stop("use only with objects of class \"abc\"")
+      stop("Use only with objects of class \"abc\".", call.=F)
     abc.out <- x
     np <- abc.out$numparam
     cl <- abc.out$call
@@ -439,7 +467,7 @@ hist.abc <- function(x, unadj = FALSE, true = NULL,
 
   
   if (!inherits(x, "abc")) 
-      stop("use only with objects of class \"abc\"")
+      stop("Use only with objects of class \"abc\".", call.=F)
   abc.out <- x
   np <- abc.out$numparam
   parnames <- abc.out$names[[1]]
@@ -450,13 +478,13 @@ hist.abc <- function(x, unadj = FALSE, true = NULL,
   ## checks if true is given
   if(!is.null(true)){
       if(!is.vector(true)){
-          stop("Supply true parameter value(s) as a vector.")
+          stop("Supply true parameter value(s) as a vector.", call.=F)
       }
       if (length(true) != np){
-          stop("Number of true values has to be the same as number of parameters in 'x'.")
+          stop("Number of true values has to be the same as number of parameters in 'x'.", call.=F)
       }
       cond <- isTRUE(c(match(names(true), parnames), match(names(true), parnames)))
-      if(cond) stop("Names do not match in 'x' and 'true'.")
+      if(cond) stop("Names do not match in 'x' and 'true'.", call.=F)
   }
 
   if(abc.out$method == "rejection") res <- abc.out$unadj.values
@@ -517,15 +545,15 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
 
 
   if (!inherits(x, "abc")) 
-    stop("use only with objects of class \"abc\"")
+    stop("Use only with objects of class \"abc\".", call.=F)
   
   abc.out <- x  
   mymethod <- abc.out$method
 
   if(mymethod == "rejection")
-    stop("diagnostic plots can be displayed when method is \"loclinear\" or \"neuralnet\"")
+    stop("Diagnostic plots can be displayed only when method is \"loclinear\" or \"neuralnet\".", cal.=F)
 
-  if(!is.matrix(param) && !is.data.frame(param) && !is.vector(param)) stop("'param' has to be a matrix, data.frame or vector.")
+  if(!is.matrix(param) && !is.data.frame(param) && !is.vector(param)) stop("'param' has to be a matrix, data.frame or vector.", call.=F)
   if(is.data.frame(param)) param <- as.matrix(param)
   
   np <- abc.out$numparam
@@ -539,18 +567,18 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
   
   ##check if param is compatible with x
   cond <- isTRUE(c(match(colnames(param), parnames), match(parnames, colnames(param))))
-  if(cond) stop("'abc.out' and 'param' are not compatible; paramater names are different.")
+  if(cond) stop("'abc.out' and 'param' are not compatible; paramater names are different.", call.=F)
   
   ## checks if true is given
   if(!is.null(true)){
       if(!is.vector(true)){
-          stop("Supply true parameter value(s) as a vector.")
+          stop("Supply true parameter value(s) as a vector.", call.=F)
       }
       if (length(true) != np){
-          stop("Number of true values has to be the same as number of parameters in 'x'.")
+          stop("Number of true values has to be the same as number of parameters in 'x'.", call.=F)
       }
       cond <- isTRUE(c(match(names(true), parnames), match(names(true), parnames)))
-      if(cond) stop("Names do not match in 'x' and 'true'.")
+      if(cond) stop("Names do not match in 'x' and 'true'.", call.=F)
   }
   
   rej <- abc.out$unadj.values
@@ -568,33 +596,33 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
     myorder <- match(parnames, colnames(param))
     if(isTRUE(myorder-1:np)){
       param <- param[, myorder]
-      warning("'param' is being re-ordered according to 'abc.out'...")
+      warning("'param' is being re-ordered according to 'abc.out'...", call.=F, immediate.=T)
     }
   }
   
   ## check if param has the right dimensions
   if(np.orig != np){
-    stop("The number parameters supplied in \"param\" is different from that in \"x\".")
+    stop("The number parameters supplied in \"param\" is different from that in \"x\".", call.=F)
   }
   
   for (i in 1:np){
     if(transf[i] == "log"){
       if(min(param[,i]) <= 0){
-        cat("log transform: values out of bounds - correcting...")
+        warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
         x.tmp <- ifelse(param[,i] <= 0,max(param[,i]),param[,i])
         x.tmp.min <- min(x.tmp)
         param[,i] <- ifelse(param[,i] <= 0, x.tmp.min,param[,i])
       }
       param[,i] <- log(param[,i])
       if(min(rej[,i]) <= 0){
-        cat("log transform: values out of bounds - correcting...")
+        warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
         x.tmp <- ifelse(rej[,i] <= 0,max(rej[,i]),rej[,i])
         x.tmp.min <- min(x.tmp)
         rej[,i] <- ifelse(rej[,i] <= 0, x.tmp.min,rej[,i])
       }
       rej[,i] <- log(rej[,i])
       if(min(res[,i]) <= 0){
-        cat("log transform: values out of bounds - correcting...")
+        warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
         x.tmp <- ifelse(res[,i] <= 0,max(res[,i]),res[,i])
         x.tmp.min <- min(x.tmp)
         res[,i] <- ifelse(res[,i] <= 0, x.tmp.min,res[,i])
@@ -610,59 +638,59 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
       }
     }
     else if(transf[i] == "logit"){
-      if(min(param[,i]) <= logit.bounds[1]){
-        x.tmp <- ifelse(param[,i] <= logit.bounds[1],max(param[,i]),param[,i])
+      if(min(param[,i]) <= logit.bounds[i,1]){
+        x.tmp <- ifelse(param[,i] <= logit.bounds[i,1],max(param[,i]),param[,i])
         x.tmp.min <- min(x.tmp)
-        param[,i] <- ifelse(param[,i] <= logit.bounds[1], x.tmp.min,param[,i])
+        param[,i] <- ifelse(param[,i] <= logit.bounds[i,1], x.tmp.min,param[,i])
       }
-      if(max(param[,i]) >= logit.bounds[2]){
-        x.tmp <- ifelse(param[,i] >= logit.bounds[2],min(param[,i]),param[,i])
+      if(max(param[,i]) >= logit.bounds[i,2]){
+        x.tmp <- ifelse(param[,i] >= logit.bounds[i,2],min(param[,i]),param[,i])
         x.tmp.max <- max(x.tmp)
-        param[,i] <- ifelse(param[,i] >= logit.bounds[2], x.tmp.max,param[,i])
+        param[,i] <- ifelse(param[,i] >= logit.bounds[i,2], x.tmp.max,param[,i])
       }
-      param[,i] <- (param[,i]-logit.bounds[1])/(logit.bounds[2]-logit.bounds[1])
+      param[,i] <- (param[,i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
       param[,i] <- log(param[,i]/(1-param[,i]))
 
-      if(min(rej[,i]) <= logit.bounds[1]){
-        x.tmp <- ifelse(rej[,i] <= logit.bounds[1],max(rej[,i]),rej[,i])
+      if(min(rej[,i]) <= logit.bounds[i,1]){
+        x.tmp <- ifelse(rej[,i] <= logit.bounds[i,1],max(rej[,i]),rej[,i])
         x.tmp.min <- min(x.tmp)
-        rej[,i] <- ifelse(rej[,i] <= logit.bounds[1], x.tmp.min,rej[,i])
+        rej[,i] <- ifelse(rej[,i] <= logit.bounds[i,1], x.tmp.min,rej[,i])
       }
-      if(max(rej[,i]) >= logit.bounds[2]){
-        x.tmp <- ifelse(rej[,i] >= logit.bounds[2],min(rej[,i]),rej[,i])
+      if(max(rej[,i]) >= logit.bounds[i,2]){
+        x.tmp <- ifelse(rej[,i] >= logit.bounds[i,2],min(rej[,i]),rej[,i])
         x.tmp.max <- max(x.tmp)
-        rej[,i] <- ifelse(rej[,i] >= logit.bounds[2], x.tmp.max,rej[,i])
+        rej[,i] <- ifelse(rej[,i] >= logit.bounds[i,2], x.tmp.max,rej[,i])
       }
-      rej[,i] <- (rej[,i]-logit.bounds[1])/(logit.bounds[2]-logit.bounds[1])
+      rej[,i] <- (rej[,i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
       rej[,i] <- log(rej[,i]/(1-rej[,i]))
 
-      if(min(res[,i]) <= logit.bounds[1]){
-        x.tmp <- ifelse(res[,i] <= logit.bounds[1],max(res[,i]),res[,i])
+      if(min(res[,i]) <= logit.bounds[i,1]){
+        x.tmp <- ifelse(res[,i] <= logit.bounds[i,1],max(res[,i]),res[,i])
         x.tmp.min <- min(x.tmp)
-        res[,i] <- ifelse(res[,i] <= logit.bounds[1], x.tmp.min,res[,i])
+        res[,i] <- ifelse(res[,i] <= logit.bounds[i,1], x.tmp.min,res[,i])
       }
-      if(max(res[,i]) >= logit.bounds[2]){
-        x.tmp <- ifelse(res[,i] >= logit.bounds[2],min(res[,i]),res[,i])
+      if(max(res[,i]) >= logit.bounds[i,2]){
+        x.tmp <- ifelse(res[,i] >= logit.bounds[i,2],min(res[,i]),res[,i])
         x.tmp.max <- max(x.tmp)
-        res[,i] <- ifelse(res[,i] >= logit.bounds[2], x.tmp.max,res[,i])
+        res[,i] <- ifelse(res[,i] >= logit.bounds[i,2], x.tmp.max,res[,i])
       }
-      res[,i] <- (res[,i]-logit.bounds[1])/(logit.bounds[2]-logit.bounds[1])
+      res[,i] <- (res[,i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
       res[,i] <- log(res[,i]/(1-res[,i]))
 
 
 
       if(!is.null(true)){
-        if(min(true[i]) <= logit.bounds[1]){
-          x.tmp <- ifelse(true[i] <= logit.bounds[1],max(true[i]),true[i])
+        if(min(true[i]) <= logit.bounds[i,1]){
+          x.tmp <- ifelse(true[i] <= logit.bounds[i,1],max(true[i]),true[i])
           x.tmp.min <- min(x.tmp)
-          true[i] <- ifelse(true[i] <= logit.bounds[1], x.tmp.min,true[i])
+          true[i] <- ifelse(true[i] <= logit.bounds[i,1], x.tmp.min,true[i])
         }
-        if(max(true[i]) >= logit.bounds[2]){
-          x.tmp <- ifelse(true[i] >= logit.bounds[2],min(true[i]),true[i])
+        if(max(true[i]) >= logit.bounds[i,2]){
+          x.tmp <- ifelse(true[i] >= logit.bounds[i,2],min(true[i]),true[i])
           x.tmp.max <- max(x.tmp)
-          true[i] <- ifelse(true[i] >= logit.bounds[2], x.tmp.max,true[i])
+          true[i] <- ifelse(true[i] >= logit.bounds[i,2], x.tmp.max,true[i])
         }
-        true[i] <- (true[i]-logit.bounds[1])/(logit.bounds[2]-logit.bounds[1])
+        true[i] <- (true[i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
         true[i] <- log(true[i]/(1-true[i]))
       }
     }
@@ -730,7 +758,7 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
     ## 3. distances
     ## ############
 
-    mypch <- 20
+    mypch <- 19
     myylim <- range(alldist[mysample])#*c(1,1.2)
 
     plot(param[mysample,i], alldist[mysample], col=cols[1],
@@ -749,7 +777,7 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
 
     if(mymethod=="loclinear") mymain <- "Residuals from lsfit()"
     if(mymethod=="neuralnet") mymain <- "Residuals from nnet()"
-    qqnorm(residuals, pch=mypch, main=mymain, sub="Normal Q-Q plot", xlab="Theoretical quantiles", ylab="Residuals")
+    qqnorm(residuals, pch=mypch, main=mymain, sub="Normal Q-Q plot", xlab="Theoretical quantiles", ylab="Residuals",...)
     qqline(residuals)
     
   } # np

@@ -139,7 +139,7 @@ data(musigma2)
 ## values are used for the other arguments.
 ##
 cv.rej <- cv4abc(param=par.sim, sumstat=stat.sim, nval=50,
-tol=c(.1,.2,.3), method="rejection")
+tols=c(.1,.2,.3), method="rejection")
 
 ## 2nd way: first creating an object of class 'abc', and then using it
 ## to pass its arguments to abc().
@@ -147,7 +147,7 @@ tol=c(.1,.2,.3), method="rejection")
 lin <- abc(target=stat.obs, param=par.sim, sumstat=stat.sim, tol=.2,
 method="loclinear", transf=c("none","log"))
 cv.lin <- cv4abc(param=par.sim, sumstat=stat.sim, abc.out=lin, nval=50,
-tol=c(.1,.2,.3))
+tols=c(.1,.2,.3))
 
 ## using the plot method. Different tolerance levels are plotted with
 ## different heat.colors. Smaller the tolerance levels correspond to

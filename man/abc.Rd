@@ -13,7 +13,7 @@
 }
 \usage{
 abc(target, param, sumstat, tol, method, hcorr = TRUE, transf = "none",
-logit.bounds = c(0,0), subset = NULL, kernel = "epanechnikov", numnet =
+logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
 10, sizenet = 5, lambda = c(0.0001,0.001,0.01), trace = FALSE, maxit =
 500, \dots)
 }
@@ -45,8 +45,10 @@ logit.bounds = c(0,0), subset = NULL, kernel = "epanechnikov", numnet =
     \code{"log"}, \code{"logit"}, and \code{"none"} (default), when no
     is transformation applied. See also \code{Details}.}
   \item{logit.bounds}{
-    a vector of bounds if \code{transf} is \code{"logit"}. These bounds
-    are applied to all parameters that are to be logit transformed.}
+    a matrix of bounds if \code{transf} is \code{"logit"}. 
+    The matrix has as many lines as parameters (including the ones 
+    that are not \code{"logit"} transformed) and 2 columns. First column is the 
+    minimum bound and second column is the maximum bound.}
   \item{subset}{
     a logical expression indicating elements or rows to keep. Missing
     values in \code{param} and/or \code{sumstat} are taken as
@@ -272,12 +274,22 @@ plot(lin, param=par.sim)
 plot(linhc, param=par.sim)
 plot(net, param=par.sim)
 
-## In this toy example, the true posterior modes may be calculated and
-## added to the plot as "ture" parameter values
+## example illustrates how to add "true" parameter values to a plot
 ##
 postmod <- c(post.mu[match(max(post.mu[,2]), post.mu[,2]),1],
              post.sigma2[match(max(post.sigma2[,2]), post.sigma2[,2]),1])
 plot(net, param=par.sim, true=postmod)
+
+
+## artificial example to show how to use the logit tranformations
+##
+myp <- data.frame(par1=runif(1000,-1,1),par2=rnorm(1000),par3=runif(1000,0,2))
+mys <- myp+rnorm(1000,sd=.1)
+myt <- c(0,0,1.5)
+lin2 <- abc(target=myt, param=myp, sumstat=mys, tol=.1, method =
+"loclinear", transf=c("logit","none","logit"),logit.bounds = rbind(c(-1,
+1), c(NA, NA), c(0, 2)))
+summary(lin2)
 }
 \keyword{htest}
 \keyword{models}
