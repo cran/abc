@@ -1,3 +1,27 @@
+######################################################################
+#
+# cv4abc.R
+#
+# copyright (c) 2011-05-30, Katalin Csillery, Olivier Francois and
+# Michael GB Blum
+#
+#     This program is free software; you can redistribute it and/or
+#     modify it under the terms of the GNU General Public License,
+#     version 3, as published by the Free Software Foundation.
+# 
+#     This program is distributed in the hope that it will be useful,
+#     but without any warranty; without even the implied warranty of
+#     merchantability or fitness for a particular purpose.  See the GNU
+#     General Public License, version 3, for more details.
+# 
+#     A copy of the GNU General Public License, version 3, is available
+#     at http://www.r-project.org/Licenses/GPL-3
+# 
+# Part of the R/abc package
+# Contains: cv4abc, is.cv4abc, summary.cv4abc, plot.cv4abc
+#
+######################################################################
+
 
 cv4abc <- function(param, sumstat, abc.out = NULL, nval, tols,
                    statistic = "median", prior.range = NULL,
@@ -131,6 +155,9 @@ is.cv4abc <- function(x){
 
 plot.cv4abc <- function(x, exclude = NULL, log = NULL, file = NULL, postscript = FALSE, onefile = TRUE, ask = !is.null(deviceIsInteractive()), caption = NULL, ...){
 
+  if (!inherits(x, "cv4abc")) 
+      stop("Use only with objects of class \"cv4abc\".", call.=F)
+  
   cv4abc.out <- x
   tols <- cv4abc.out$tols
   numtols <- length(tols)
@@ -194,6 +221,9 @@ plot.cv4abc <- function(x, exclude = NULL, log = NULL, file = NULL, postscript =
 
 summary.cv4abc <- function(object, print = TRUE, digits = max(3, getOption("digits")-3), ...){
 
+  if (!inherits(object, "cv4abc")) 
+      stop("Use only with objects of class \"cv4abc\".", call.=F)
+  
   cv4abc.out <- object
   tols <- cv4abc.out$tols
   numtols <- length(tols)

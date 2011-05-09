@@ -1,6 +1,28 @@
-# Model selection functions
+######################################################################
+#
+# postpr.R
+#
+# copyright (c) 2011-05-30, Katalin Csillery, Olivier Francois and
+# Michael GB Blum with some initial code from Mark Beaumont
+#
+#     This program is free software; you can redistribute it and/or
+#     modify it under the terms of the GNU General Public License,
+#     version 3, as published by the Free Software Foundation.
+# 
+#     This program is distributed in the hope that it will be useful,
+#     but without any warranty; without even the implied warranty of
+#     merchantability or fitness for a particular purpose.  See the GNU
+#     General Public License, version 3, for more details.
+# 
+#     A copy of the GNU General Public License, version 3, is available
+#     at http://www.r-project.org/Licenses/GPL-3
+# 
+# Part of the R/abc package
+# Contains: postpr, summary.postpr
+#
+######################################################################
 
-postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epanechnikov",
+postpr <- function(target, index, sumstat, tol, subset=NULL, method, corr=TRUE, kernel="epanechnikov",
                    numnet = 10, sizenet = 5, lambda = c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...){
 
   require(nnet)
@@ -8,7 +30,7 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
   call <- match.call()
 
   ## general checks that the function is used correctly
-  ## o###################################################
+  ## ###################################################
 
   if(missing(target)) stop("'target' is missing with no default", call.=F)
   if(missing(index)) stop("'index' is missing with no default", call.=F)
@@ -38,19 +60,19 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
   
   if(is.vector(sumstat)) sumstat <- matrix(sumstat, ncol=1)
   if(length(target)!=dim(sumstat)[2]) stop("Number of summary statistics in 'target' has to be the same as in 'sumstat'.", call.=F)
-  
-  index <- as.factor(index)
+
+  index <- factor(index)
   mymodels <- levels(index)
   if(!is.numeric(target)) target <- as.numeric(target)
   
   ## parameter and/or sumstat values that are to be excluded
-  #########################################################
+  ## #######################################################
   gwt <- rep(TRUE,length(sumstat[,1]))
   gwt[attributes(na.omit(sumstat))$na.action] <- FALSE
   if(is.null(subset)) subset <- rep(TRUE,length(sumstat[,1]))
   gwt <- as.logical(gwt*subset)
   
-  sumstat<-as.data.frame(sumstat)
+  sumstat <- as.data.frame(sumstat) ## ?????????????????
   ## extract names of statistics if given
   ## ####################################
   nss <- length(sumstat[1,])
@@ -72,8 +94,8 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
     target <- target[cond1]
   }
 
-  # scale everything
-  ##################
+  ## scale everything
+  ## ################
   scaled.sumstat <- sumstat
   for(j in 1:nss){
     scaled.sumstat[,j] <- normalise(sumstat[,j],sumstat[,j][gwt])
@@ -97,8 +119,14 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
   # wt1 defines the region we're interested in
   abstol <- quantile(dist,tol)
   if(kernel == "gaussian") wt1 <- rep(TRUE, length(dist)) ## ???????????????????????????
-  else wt1 <- dist <= abstol
-
+  else{
+      ceiling(length(dist)*tol)->nacc
+      sort(dist)[nacc]->ds
+      wt1 <- (dist <= ds)
+      aux<-cumsum(wt1)
+      wt1 <- wt1 & (aux<=nacc)
+  }
+  
   ## select summary statistics in region
   ## ##################################
   ss <- scaled.sumstat[wt1,]
@@ -154,110 +182,130 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, kernel="epa
         pred<-c(1-pred,pred)
         names(pred)<-levels(ok)
       }
-    }
+  }
     
     else if(method == "neuralnet"){
-      lambda <- sample(lambda, numnet, replace=T)
-      target <- as.data.frame(matrix(target, nrow=1))
-      names(target) <- statnames
-      pred <- 0
-      for(i in 1:numnet){
-        fit1 <- nnet(fml, data=ss, weights = weights, decay = lambda[i],
-                     size = sizenet, trace = trace, linout = linout, maxit = maxit, ...)
-        if(length(mymodels)==2)
-        {
+        lambda <- sample(lambda, numnet, replace=T)
+        target <- as.data.frame(matrix(target, nrow=1))
+        names(target) <- statnames
+        pred <- 0
+        for(i in 1:numnet){
+            fit1 <- nnet(fml, data=ss, weights = weights, decay = lambda[i],
+                         size = sizenet, trace = trace, linout = linout, maxit = maxit, ...)
+            if(length(mymodels)==2)
+            {
         	auxm<-predict(fit1, target, type="raw")
         	pred <- pred + c(1-auxm,auxm)
-        }
-        else
+            }
+            else
         	pred <- pred + predict(fit1, target, type="raw")
-      }
-      pred <- pred/numnet
-      if(length(mymodels)!=2)
-	  {
-      		temp <- rep(0, length(mymodels))
-      		names(temp) <- mymodels
-      		temp[match(colnames(pred), mymodels)] <- pred
-      		pred <- temp
-      }
-      else
-      	names(pred) <- levels(ok)
+        }
+        pred <- pred/numnet
+        if(length(mymodels)!=2)
+        {
+            temp <- rep(0, length(mymodels))
+            names(temp) <- mymodels
+            temp[match(colnames(pred), mymodels)] <- pred
+            pred <- temp
+        }
+        else names(pred) <- levels(ok)
     }
-  }
-  
-  postpr.out <- list(values=values, pred=pred, weights=weights, ss=ss,
-                     call=call, na.action=gwt, method=method,
-                     models=mymodels)
-
-  class(postpr.out) <- "postpr"
-  invisible(postpr.out)
-  
+    ## correction for potentially different numbers of simulations per models
+    ratio <- (pred*length(index)*tol) / table(index)
+    pred <- ratio/sum(ratio)
+    attributes(dimnames(pred)) <- NULL
 }
 
-summary.postpr <- function(object, rejection = TRUE, ...){
+  if(rejmethod){
+      postpr.out <- list(values=values, ss=ss, call=call, na.action=gwt, method=method, corr=corr, nmodels=table(index),
+                         numstat=nss, names=list(models=mymodels, statistics.names=statnames))
+  }
+  else{
+      postpr.out <- list(values=values, pred=pred, ss=ss, weights=weights, call=call, na.action=gwt, method=method, corr=corr, nmodels=c(table(index)),
+                         numstat=nss, names=list(models=mymodels, statistics.names=statnames))
+  }
+  class(postpr.out) <- "postpr"
+  invisible(postpr.out)
+}
 
-# calculate model probabilities and bayes factors
+summary.postpr <- function(object, rejection = TRUE, print = TRUE, digits = max(3, getOption("digits")-3), ...){
 
+  if (!inherits(object, "postpr")) 
+    stop("Use only with objects of class \"postpr\".", call.=F)
+  
   postpr.out <- object
   cl <- postpr.out$call
   npost <- length(postpr.out$values)
   pred <- postpr.out$pred
   allvals <- postpr.out$values
-  nzvals <- (postpr.out$values)
-
   postmod <- levels(postpr.out$values)
   nmod <- length(postmod)
-  
   method <- postpr.out$method
-
-  cat("Call: \n")
-  dput(cl, control=NULL)
-    
-  cat(paste("Data:\n postpr.out$values (",npost," posterior samples)\n", sep=""))
-  cat(paste("Models a priori:\n "))
-  cat(postpr.out$models, sep=", ")
-  cat(paste("\nModels a posteriori:\n "))
-  cat(postmod, sep=", ")
-  cat("\n\n")
-
-  if(rejection || method == "rejection"){
-    
-    cat("Proportion of accepted simulations (rejection):\n")
-    cat("-----------------------------------------------\n")
-    allpr <- table(allvals)/length(allvals)
-    prnames <- dimnames(allpr)$allvals
-    allpr <- c(allpr); names(allpr) <- prnames
-    print(round(allpr, digits=3))
-    
-    if(nmod>1){
-      pr.rej <- table(nzvals)/length(nzvals)
-      bf.rej <- t(matrix(pr.rej, nmod, nmod, byrow=T)/matrix(pr.rej, nmod, nmod, byrow=F))
-      colnames(bf.rej) <- postmod
-      rownames(bf.rej) <- postmod
-      bf.rej <- as.table(bf.rej)
-      cat("\nBayes factors:\n")
-      print(round(bf.rej, digits=3))
-    }
-    else bf.rej <- NA
-    
+  corr <- postpr.out$corr
+  nmodels <- postpr.out$nmodels
+  
+  if(print){
+      cat("Call: \n")
+      dput(cl, control=NULL)  
+      cat(paste("Data:\n postpr.out$values (",npost," posterior samples)\n", sep=""))
+      cat(paste("Models a priori:\n "))
+      cat(postpr.out$names$models, sep=", ")
+      cat(paste("\nModels a posteriori:\n "))
+      cat(postmod, sep=", ")
+      if(corr & length(unique(nmodels))>1){
+          cat("\n")
+          warning("Posterior model probabilities are corrected for unequal number of simulations per models.", immediate.=T, call.=F)
+      }
+      cat("\n\n")
   }
-    
+  
+  if(rejection || method == "rejection"){
+      
+      if(print) cat("Proportion of accepted simulations (rejection):\n")
+      allpr <- table(allvals)/length(allvals)
+      if(corr){
+          ratio <- (allpr*npost) / nmodels
+          allpr <- ratio/sum(ratio)
+      }
+      prnames <- dimnames(allpr)$allvals
+      allpr <- c(allpr); names(allpr) <- prnames
+      if(print) print(round(allpr, digits=digits))
+      
+      if(nmod>1){
+          pr.rej <- table(allvals)/length(allvals)
+          bf.rej <- t(matrix(pr.rej, nmod, nmod, byrow=T)/matrix(pr.rej, nmod, nmod, byrow=F))
+          colnames(bf.rej) <- postmod
+          rownames(bf.rej) <- postmod
+          bf.rej <- as.table(bf.rej)
+          if(print){
+              cat("\nBayes factors:\n")
+              print(round(bf.rej, digits=digits))
+              cat("\n\n")
+          }
+      }
+      else bf.rej <- NA
+      
+  }
+  
   if(method == "mnlogistic" | method == "neuralnet"){
-
-    cat(paste("Posterior model probabilities (", method, "):\n", sep=""))
-    cat("------------------------------------------\n")
-    print(round(pred, digits=3))
-
+    
+    if(print){
+      cat(paste("Posterior model probabilities (", method, "):\n", sep=""))
+      print(round(pred, digits=digits))
+    }
     if(nmod>1){
       bf.reg <- t(matrix(pred[pred!=0], nmod, nmod, byrow=T)/matrix(pred[pred!=0], nmod, nmod, byrow=F))
       colnames(bf.reg) <- postmod
       rownames(bf.reg) <- postmod
       bf.reg <- as.table(bf.reg)
-      cat("\nBayes factors:\n")
-      print(round(bf.reg, digits=3))
+      if(print){
+        cat("\nBayes factors:\n")
+        print(round(bf.reg, digits=digits))
+        cat("\n")
+      }
     }
     else bf.reg <- NA
-
+      
     if(rejection){
       if(method == "mnlogistic")
         out <- list(rejection=list(Prob=allpr, BayesF=bf.rej), mnlogistic=list(Prob=pred, BayesF=bf.reg))
@@ -268,8 +316,7 @@ summary.postpr <- function(object, rejection = TRUE, ...){
       out <- list(Prob=pred, BayesF=bf.reg)
     }
   }
-  
   else out <- list(Prob=allpr, BayesF=bf.rej)
-
   invisible(out)
 }
+  

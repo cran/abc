@@ -170,4 +170,5 @@ summary(cv.lin)
 summary(cv.rej)
 }
 \keyword{htest}
+\keyword{models}
 % Converted by Sd2Rd version 1.15.

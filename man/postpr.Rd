@@ -4,10 +4,10 @@
   Estimating posterior model probabilities
 }
 \description{
- Model selection in Approximate Bayesian Computation.
+ Model selection with Approximate Bayesian Computation (ABC).
 }
 \usage{
-postpr(target, index, sumstat, tol, subset = NULL, method,
+postpr(target, index, sumstat, tol, subset = NULL, method, corr=TRUE,
 kernel="epanechnikov", numnet = 10, sizenet = 5, lambda =
 c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
 }
@@ -32,6 +32,11 @@ c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
      a character string indicating the type of simulation required.
     Possible values are \code{"rejection"}, \code{"mnlogistic"},
     \code{"neuralnet"}. See \code{Details}.}
+  \item{corr}{
+    logical, if \code{TRUE} (default) posterior model probabilities are corrected
+    for the number of simulations performed for each model. If equal
+    number of simulations are available for all models, \code{corr} has
+    no effect.}
   \item{kernel}{
     a character string specifying the kernel to be used when method is
     \code{"mnlogistic"} or \code{"neuralnet"}. Defaults to
@@ -58,44 +63,47 @@ c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
     other arguments passed on from \code{nnet}.}
 }
 \value{
-  \code{postpr} returns an object of \code{class} \code{"postpr"}.
+  An object of \code{class} \code{"postpr"}, containing the following
+  components:
   
-  The function \code{summary} is used to obtain the model probabilities
-  and Bayes factors between pairs of models.
-  
-  The returned value is an object of class \code{"postpr"}, containing the
-  following components:
-  \item{pred}{a vector of model probabilities.}
-  \item{values}{the vector of model indices in the accepted region
-    using method=\code{"rejection"}.}
-  \item{weights}{vector of regression weights.}
-  \item{ss}{values of the summary statistics in the accepted region, ie
-    corresponding to \code{values}.}
-  \item{call}{the original call}
-  \item{na.action}{A logical vector indicating the elements or rows that
-    were excluded, including both NA/NaN's and elements/rows selected by
-    \code{subset}}
-  \item{method}{Character string indicating the method used, i.e. either
+  \item{pred}{a vector of model probabilities when method is
+  \code{"mnlogistic"} or \code{"neuralnet"}.}
+  \item{values}{the vector of model indices in the accepted region using
+    the rejection method.}
+  \item{weights}{vector of regression weights when method is
+  \code{"mnlogistic"} or \code{"neuralnet"}.}
+  \item{ss}{summary statistics in the accepted region.}
+  \item{call}{the original call.}
+  \item{na.action}{a logical vector indicating the elements or rows that
+    were excluded, including both \code{NA}/\code{NaN}'s and
+    elements/rows selected by \code{subset}}
+  \item{method}{a character string indicating the method used, i.e.
     \code{"rejection"}, \code{"mnlogistic"} or \code{"neuralnet"}.}
+  \item{corr}{logical, if \code{TRUE} the posterior model probabilities
+    are corrected for the number of simulations performed for each
+    model.}
+  \item{nmodels}{the number of simulations performed for each model a
+    priori.}
   \item{models}{
-    a character vector of model names (a priori)}
+    a character vector of model names (a priori).}
+  \item{numstat}{the number of summary statistics used.}
+  \item{names}{a list of two elements: \code{model} contains the model names,
+    and \code{statistics.names} the names of the summary statistics.}
 }
 \details{
-
-  The function computes the posterior model probabilities.
-  Simulations have to be performed
-  with at least two distinct models. When method is \code{"rejection"},
-  the posterior probability of a given model is approximated by the
-  proportion of accepted simulations given this model. This
-  approximation holds when the different models are a priori equally
-  likely, and the same number of simulations is performed for each
-  model. When method is \code{"mnlogistic"} the posterior model
+  The function computes the posterior model probabilities.  Simulations
+  have to be performed with at least two distinct models. When method is
+  \code{"rejection"}, the posterior probability of a given model is
+  approximated by the proportion of accepted simulations given this
+  model. This approximation holds when the different models are a priori
+  equally likely, and the same number of simulations is performed for
+  each model. When method is \code{"mnlogistic"} the posterior model
   probabilities are estimated using a multinomial logistic regression as
   implemented in the function \code{\link{multinom}} from the package
   \code{\link{nnet}}. When method is \code{"neuralnet"}, neural networks
   are used to predict the probabilities of models based on the observed
-  statistics using \code{\link{nnet}}. This method can be useful if one
-  wishes to use many statistics.
+  statistics using \code{\link{nnet}}. This method can be useful if many
+  summary statistics are used.
   
   Names for the summary statistics are strongly recommended. Names can
   be supplied as colnames to \code{sumstat} (and target). If no names are
@@ -112,14 +120,12 @@ c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
   
 }
 \author{
-  
-  Katalin Csill\'ery with contributions from Michael Blum, and ideas from
-  R code freely available on Mark Beaumont's web site
-  (\url{http://www.rubic.rdg.ac.uk/~mab/}). 
-  
+  Katalin Csillery, Olivier Francois and Michael Blum with some
+  initial code from Mark Beaumont
+  (\url{http://www.rubic.rdg.ac.uk/~mab/}).
 }
 \seealso{
-  \code{\link{summary.postpr}}, \code{\link{abc}}
+  \code{\link{summary.postpr}}
 }
 \examples{
 data(human)
@@ -127,26 +133,29 @@ data(human)
 
 ## the two summary statistics: mean and variance of Tajima's D over 50
 ## loci
-##
 par(mfcol = c(1,2))
 boxplot(tajima.sim[,1]~models, main=names(tajima.sim)[1])
 boxplot(tajima.sim[,2]~models, main=names(tajima.sim)[2])
 
 ## model selection with ABC for the three populations, representing
 ## three continents
-##
+
 ## in Africa, population expansion is the most supported model
-africa <- postpr(tajima.obs["Hausa",], models, tajima.sim, tol=.01, method="mnlogistic")
+africa <- postpr(tajima.obs["Hausa",], models, tajima.sim, tol=.01,
+method="mnlogistic")
 summary(africa)
 
 ## in Europe and Asia, population bottleneck is the most supported model
-europe <- postpr(tajima.obs["Italian",], models, tajima.sim, tol=.01, method="mnlogistic")
+europe <- postpr(tajima.obs["Italian",], models, tajima.sim, tol=.01,
+method="mnlogistic")
 summary(europe)
-asia <- postpr(tajima.obs["Chinese",], models, tajima.sim, tol=.01, method="mnlogistic")
+asia <- postpr(tajima.obs["Chinese",], models, tajima.sim, tol=.01,
+method="mnlogistic")
 summary(asia)
 
 ss <- cbind(runif(1000),rt(1000,df=20))
-postpr(target=c(3), index=c(rep("norm",500),rep("t",500)), sumstat=ss[,1], tol=.1, method="rejection")
+postpr(target=c(3), index=c(rep("norm",500),rep("t",500)),
+sumstat=ss[,1], tol=.1, method="rejection")
 
 }
 \keyword{htest}

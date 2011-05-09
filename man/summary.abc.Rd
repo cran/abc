@@ -59,5 +59,6 @@ digits = max(3, getOption("digits")-3), \dots)
 \examples{
 ## see ?abc for examples
 }
+\keyword{htest}
 \keyword{models}
 % Converted by Sd2Rd version 1.15.

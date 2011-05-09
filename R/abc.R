@@ -1,8 +1,26 @@
-# part of R package abc
-# copyright (C) 200?-2010 M.A. Beaumont, M.G.B. Blum
-# copyright (C) 2010 K. Csillery
+######################################################################
+#
+# abc.R
+#
+# copyright (c) 2011-05-30, Katalin Csillery, Olivier Francois and
+# Michael GB Blum with some initial code from Mark Beaumont
+#
+#     This program is free software; you can redistribute it and/or
+#     modify it under the terms of the GNU General Public License,
+#     version 3, as published by the Free Software Foundation.
 # 
-# Unlimited distribution is permitted
+#     This program is distributed in the hope that it will be useful,
+#     but without any warranty; without even the implied warranty of
+#     merchantability or fitness for a particular purpose.  See the GNU
+#     General Public License, version 3, for more details.
+# 
+#     A copy of the GNU General Public License, version 3, is available
+#     at http://www.r-project.org/Licenses/GPL-3
+# 
+# Part of the R/abc package
+# Contains: abc, return.abc, print.abc, is.abc, summary.abc, hist.abc, plot.abc
+#
+######################################################################
 
 abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
                 transf = "none", logit.bounds = NULL, subset = NULL, kernel = "epanechnikov",
@@ -53,57 +71,57 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     ## transformations
     ## ################
     ltransf <- length(transf)
-
+    
     if(!prod(unique(transf) %in% c("none","log","logit")))
-        stop("Transformations must be none, log, or logit.", call.=F)
+      stop("Transformations must be none, log, or logit.", call.=F)
     
     ## no transformation should be applied when rejmethod is true
     if(rejmethod){
-        if(!all(transf == "none")){
-            warning("No transformation is applied when the simple rejection is used.", call.=F, immediate.=T)
-        }
-        transf[1:numparam] <- "none"
+      if(!all(transf == "none")){
+        warning("No transformation is applied when the simple rejection is used.", call.=F, immediate.=T)
+      }
+      transf[1:numparam] <- "none"
     }
     else{
-        if("logit" %in% transf & is.null(logit.bounds)) stop("Define logit bounds for each parameter (NA's for parameters that are not to be \"logit\" transformed).", call.=F)
-        else if ("logit" %in% transf & length(logit.bounds)==2) logit.bounds <- matrix(logit.bounds, ncol=2)
-        if(numparam != ltransf){
-            ## transf has only one value
-            if(ltransf == 1){
-                if(transf == "log"){
-                    transf <- rep(transf[1], numparam)
-                    warning("All parameters will be \"log\" transformed.", call.=F, immediate.=T)
-                }
-                if(transf=="none"){
-                    transf <- rep(transf[1], numparam)
-                    warning("None of the parameters will be transformed.", call.=F, immediate.=T)
-                }
-                if(transf=="logit" & dim(logit.bounds)[1]==numparam){
-                    transf <- rep(transf[1], numparam)
-                    ltransf <- numparam
-                    warning("All parameters will be \"logit\" transformed with their corresponding logit bounds.", call.=F, immediate.=T)
-                }
-                else if(transf=="logit" & length(logit.bounds)==2){
-                    transf <- rep(transf[1], numparam)
-                    ltransf <- numparam
-                    logit.bounds <- matrix(logit.bounds, ncol=2, nrow=numparam, byrow=T)
-                    warning("All parameters will be \"logit\" transformed with the same given logit bounds.", call.=F, immediate.=T)
-                }
-            }
-            else stop("Number of transformations must be the same as the number of parameters.", call.=F)
+      if("logit" %in% transf & is.null(logit.bounds)) stop("Define logit bounds for each parameter (NA's for parameters that are not to be \"logit\" transformed).", call.=F)
+      else if ("logit" %in% transf & length(logit.bounds)==2) logit.bounds <- matrix(logit.bounds, ncol=2)
+      if(numparam != ltransf){
+        ## transf has only one value
+        if(ltransf == 1){
+          if(transf == "log"){
+            transf <- rep(transf[1], numparam)
+            warning("All parameters will be \"log\" transformed.", call.=F, immediate.=T)
+          }
+          else if(transf=="none"){
+            transf <- rep(transf[1], numparam)
+            warning("None of the parameters will be transformed.", call.=F, immediate.=T)
+          }
+          else if(transf=="logit" & dim(logit.bounds)[1]==numparam){
+            transf <- rep(transf[1], numparam)
+            ltransf <- numparam
+            warning("All parameters will be \"logit\" transformed with their corresponding logit bounds.", call.=F, immediate.=T)
+          }
+          else if(transf=="logit" & length(logit.bounds)==2){
+            transf <- rep(transf[1], numparam)
+            ltransf <- numparam
+            logit.bounds <- matrix(logit.bounds, ncol=2, nrow=numparam, byrow=T)
+            warning("All parameters will be \"logit\" transformed with the same given logit bounds.", call.=F, immediate.=T)
+          }
         }
-        if("logit" %in% transf){
-            if(is.null(logit.bounds)) stop("Define logit bounds for each parameter (NA's for parameters that are not to be \"logit\" transformed).", call.=F)
-            else if (dim(logit.bounds)[1]!=numparam)
-                stop("Matrix logit bounds must have as many lines as parameters.", call.=F)
-            for (i in 1:ltransf){
-                if(transf[i]=="logit"){
-                    if(sum(is.na(logit.bounds[i,]))) stop("Logit bounds cannot be NA for a parameter that is to be \"logit\" transformed.", call.=F)
-                    if(logit.bounds[i,1] >= logit.bounds[i,2]) stop("Logit bounds are incorrect for one or more parameter(s). The 1st bound must be larger or equal to the 2nd bound.", call.=F)
-                }
-                else logit.bounds[i,] <- c(NA, NA)
-            }
+        else stop("Number of transformations must be the same as the number of parameters.", call.=F)
+      }
+      if("logit" %in% transf){
+        if(is.null(logit.bounds)) stop("Define logit bounds for each parameter (NA's for parameters that are not to be \"logit\" transformed).", call.=F)
+        else if (dim(logit.bounds)[1]!=numparam)
+          stop("Matrix logit bounds must have as many lines as parameters.", call.=F)
+        for (i in 1:ltransf){
+          if(transf[i]=="logit"){
+            if(sum(is.na(logit.bounds[i,]))) stop("Logit bounds cannot be NA for a parameter that is to be \"logit\" transformed.", call.=F)
+            if(logit.bounds[i,1] >= logit.bounds[i,2]) stop("Logit bounds are incorrect for one or more parameter(s). The 1st bound must be larger or equal to the 2nd bound.", call.=F)
+          }
+          else logit.bounds[i,] <- c(NA, NA)
         }
+      }
     }
     
     ## parameter and/or sumstat values that are to be excluded
@@ -153,7 +171,13 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     ## wt1 defines the region we're interested in
     abstol <- quantile(dist,tol)
     if(kernel == "gaussian") wt1 <- rep(TRUE, length(dist)) ## ???????????????????????????
-    else wt1 <- dist <= abstol
+    else{
+        ceiling(length(dist)*tol)->nacc
+        sort(dist)[nacc]->ds
+        wt1 <- (dist <= ds)
+        aux<-cumsum(wt1)
+        wt1 <- wt1 & (aux<=nacc)
+    }
     
     ## transform parameters
     ## ######################
@@ -210,7 +234,7 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
         ## weights
         if(kernel == "epanechnikov") weights <- 1 - (dist[wt1]/abstol)^2
         if(kernel == "rectangular") weights <- dist[wt1]/abstol
-        if(kernel == "gaussian") weights <- 1/sqrt(2*pi)*exp(-0.5*(dist/abstol)^2)
+        if(kernel == "gaussian") weights <- exp(-.5*dist/abstol^2)/sqrt(2*pi)
         if(kernel == "triangular") weights <- 1 - abs(dist[wt1]/abstol)
         if(kernel == "biweight") weights <- (1 - (dist[wt1]/abstol)^2)^2
         if(kernel == "cosine") weights <- cos(pi/2*dist[wt1]/abstol)
@@ -393,64 +417,63 @@ print.abc <- function(x, ...){
 }
 
 summary.abc <- function(object, unadj = FALSE, intvl = .95, print = TRUE, digits = max(3, getOption("digits")-3), ...){
-
-  x <- object
-    if (!inherits(x, "abc")) 
-      stop("Use only with objects of class \"abc\".", call.=F)
-    abc.out <- x
-    np <- abc.out$numparam
-    cl <- abc.out$call
-    parnames <- abc.out$names[[1]]
-    npri <- dim(abc.out$unadj.values)[1]
-    npost <- dim(abc.out$unadj.values)[1]
-    myprobs <- c((1-intvl)/2, 0.5, 1-(1-intvl)/2)
-    
+  
+  if (!inherits(object, "abc")) 
+    stop("Use only with objects of class \"abc\".", call.=F)
+  abc.out <- object
+  np <- abc.out$numparam
+  cl <- abc.out$call
+  parnames <- abc.out$names[[1]]
+  npri <- dim(abc.out$unadj.values)[1]
+  npost <- dim(abc.out$unadj.values)[1]
+  myprobs <- c((1-intvl)/2, 0.5, 1-(1-intvl)/2)
+  
+  if(print){
+    cat("Call: \n")
+    dput(cl, control=NULL)
+  }
+  
+  if(abc.out$method == "rejection" || unadj){
+    if(print) cat(paste("Data:\n abc.out$unadj.values (",npost," posterior samples)\n\n", sep=""))
+    res <- matrix(abc.out$unadj.values, ncol=np)
+    mymin <- apply(res, 2, min)
+    mymax <- apply(res, 2, max)
+    mymean <- apply(res, 2, mean)
+    mymode <- apply(res, 2, getmode, ...)
+    quants <- apply(res, 2, quantile, probs = myprobs)
+    sums <- rbind(mymin, quants[1,], quants[2,], mymean, mymode, quants[3,], mymax)
+    dimnames(sums) <- list(c("Min.:", paste(c(myprobs[1])*100, "% Perc.:", sep=""),
+                             "Median:", "Mean:", "Mode:",
+                             paste(c(myprobs[3])*100, "% Perc.:", sep=""), "Max.:"),
+                           parnames)
+  }
+  else{
     if(print){
-        cat("Call: \n")
-        dput(cl, control=NULL)
+      cat(paste("Data:\n abc.out$adj.values (",npost," posterior samples)\n", sep=""))
+      cat(paste("Weights:\n abc.out$weights\n\n", sep=""))
     }
-    
-    if(abc.out$method == "rejection" || unadj){
-        if(print) cat(paste("Data:\n abc.out$unadj.values (",npost," posterior samples)\n\n", sep=""))
-        res <- matrix(abc.out$unadj.values, ncol=np)
-        mymin <- apply(res, 2, min)
-        mymax <- apply(res, 2, max)
-        mymean <- apply(res, 2, mean)
-        mymode <- apply(res, 2, getmode, ...)
-        quants <- apply(res, 2, quantile, probs = myprobs)
-        sums <- rbind(mymin, quants[1,], quants[2,], mymean, mymode, quants[3,], mymax)
-        dimnames(sums) <- list(c("Min.:", paste(c(myprobs[1])*100, "% Perc.:", sep=""),
-                                 "Median:", "Mean:", "Mode:",
-                                 paste(c(myprobs[3])*100, "% Perc.:", sep=""), "Max.:"),
-                               parnames)
-    }
-    else{
-        if(print){
-            cat(paste("Data:\n abc.out$adj.values (",npost," posterior samples)\n", sep=""))
-            cat(paste("Weights:\n abc.out$weights\n\n", sep=""))
-        }
-        res <- matrix(abc.out$adj.values, ncol=np)
-        wt <- abc.out$weights
-        mymin <- apply(res, 2, min)
-        mymax <- apply(res, 2, max)
-        mymean <- apply(res, 2, weighted.mean, w = wt)
-        mymode <- apply(res, 2, getmode, wt/sum(wt), ...)
-        quants <- apply(res, 2, function(x) rq(x~1, tau = myprobs, weights = wt)$coef)
-        sums <- rbind(mymin, quants[1,], quants[2,], mymean, mymode, quants[3,], mymax)
-        dimnames(sums) <- list(c("Min.:", paste("Weighted ", c(myprobs[1])*100, " % Perc.:", sep=""),
-                                 "Weighted Median:", "Weighted Mean:", "Weighted Mode:",
-                                 paste("Weighted ", c(myprobs[3])*100, " % Perc.:", sep=""), "Max.:"),
-                               parnames)
-    }
-    class(sums) <- "table"
-    if(print){
-        if(length(digits) == 1) 
-            print(round(sums, digits = digits), quote=FALSE)
-        else
-            print(apply(rbind(digits, sums), 2, function(a) round(a[-1], digits = a[1])), quote=FALSE)
-        invisible(sums)
-    }
-    else sums
+    res <- matrix(abc.out$adj.values, ncol=np)
+    wt <- abc.out$weights
+    mymin <- apply(res, 2, min)
+    mymax <- apply(res, 2, max)
+    mymean <- apply(res, 2, weighted.mean, w = wt)
+    mymode <- apply(res, 2, getmode, wt/sum(wt), ...)
+    quants <- apply(res, 2, function(x) rq(x~1, tau = myprobs, weights = wt)$coef)
+    sums <- rbind(mymin, quants[1,], quants[2,], mymean, mymode, quants[3,], mymax)
+    dimnames(sums) <- list(c("Min.:", paste("Weighted ", c(myprobs[1])*100, " % Perc.:", sep=""),
+                             "Weighted Median:", "Weighted Mean:", "Weighted Mode:",
+                             paste("Weighted ", c(myprobs[3])*100, " % Perc.:", sep=""), "Max.:"),
+                           parnames)
+  }
+  class(sums) <- "table"
+  if(print){
+    if(length(digits) == 1) 
+      print(round(sums, digits = digits), quote=FALSE)
+    else
+      print(apply(rbind(digits, sums), 2, function(a) round(a[-1], digits = a[1])), quote=FALSE)
+    invisible(sums)
+  }
+  else sums
 }
 
 getmode <- function(x, weights = NULL, ...){
@@ -542,12 +565,10 @@ hist.abc <- function(x, unadj = FALSE, true = NULL,
 plot.abc <- function(x, param, subsample = 1000, true = NULL,
                      file = NULL, postscript = FALSE, onefile = TRUE, ask = !is.null(deviceIsInteractive()), ...){
 
-
-
   if (!inherits(x, "abc")) 
     stop("Use only with objects of class \"abc\".", call.=F)
   
-  abc.out <- x  
+  abc.out <- x
   mymethod <- abc.out$method
 
   if(mymethod == "rejection")
@@ -792,11 +813,3 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
   invisible()
   
 } # end of plot.abc
-
-
-normalise <- function(x,y){
-  if(mad(y) == 0)
-    return (x)
-  else
-    return (x/mad(y))
-}

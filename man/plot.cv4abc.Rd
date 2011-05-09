@@ -9,11 +9,9 @@
   tolerance level.
 }
 \usage{
-
-\method{plot}{cv4abc}(x, exclude = NULL, log = NULL, file = NULL, postscript =
-FALSE, onefile = TRUE, ask = !is.null(deviceIsInteractive()), caption =
-NULL, \dots)
-
+\method{plot}{cv4abc}(x, exclude = NULL, log = NULL, file = NULL,
+postscript = FALSE, onefile = TRUE, ask =
+!is.null(deviceIsInteractive()), caption = NULL, \dots)
 }
 \arguments{
   \item{x}{

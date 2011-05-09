@@ -2,7 +2,7 @@
 \alias{abc}
 \alias{abc.return}
 \title{
-  Parameter estimation via Approximate Bayesian Computation (ABC)
+  Parameter estimation with Approximate Bayesian Computation (ABC)
 }
 \description{
   This function performs multivariate parameter estimation based on
@@ -209,19 +209,16 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
   for Approximate Bayesian Computation. \emph{Statistics and Computing}
   \bold{20}, 63-73.
   
-  Csill\'ery, K., M.G.B. Blum, O.E. Gaggiotti and O. Francois (2010)
+  Csillery, K., M.G.B. Blum, O.E. Gaggiotti and O. Francois (2010)
   Approximate Bayesian Computation (ABC) in practice. \emph{Trends in
   Ecology and Evolution}, \bold{25}, 410-418.
   
 }
 \author{
-  
-  Katalin Csill\'ery with contributions from Michael Blum, and ideas from
-  R code freely available on Mark Beaumont's web site
+  Katalin Csillery, Olivier Francois and Michael Blum with some
+  initial code from Mark Beaumont
   (\url{http://www.rubic.rdg.ac.uk/~mab/}).
-  
 }
-
 \seealso{
   \code{\link{summary.abc}}, \code{\link{hist.abc}},
   \code{\link{plot.abc}}, \code{\link{lsfit}}, \code{\link{nnet}},

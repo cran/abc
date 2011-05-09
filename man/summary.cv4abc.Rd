@@ -8,7 +8,8 @@ This function calculates the prediction error from an object of class
 \code{"cv4abc"} for each parameter and tolerance level.
 }
 \usage{
-\method{summary}{cv4abc}(object, print = TRUE, digits = max(3, getOption("digits")-3), \dots)
+\method{summary}{cv4abc}(object, print = TRUE, digits = max(3,
+getOption("digits")-3), \dots)
 }
 \arguments{
   \item{object}{

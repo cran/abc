@@ -7,9 +7,10 @@
   Histograms of posterior samples from objects of class \code{"abc"}.
 }
 \usage{
-\method{hist}{abc}(x, unadj = FALSE, true = NULL, file = NULL, postscript =
-FALSE, onefile = TRUE, ask = !is.null(deviceIsInteractive()), col.hist = "grey",
-col.true = "red", caption = NULL, \dots)
+\method{hist}{abc}(x, unadj = FALSE, true = NULL, file = NULL,
+postscript = FALSE, onefile = TRUE, ask =
+!is.null(deviceIsInteractive()), col.hist = "grey", col.true = "red",
+caption = NULL, \dots)
 }
 \arguments{
   \item{x}{

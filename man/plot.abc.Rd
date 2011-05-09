@@ -4,8 +4,7 @@
   Diagnostic plots for ABC
 }
 \description{
-  
-  A plotting utile for quick visualization of the quality of an ABC
+    A plotting utile for quick visualization of the quality of an ABC
   analysis from an object of class \code{"abc"} generated with methods
   \code{"loclinear"} or \code{"neuralnet"} (see \code{\link{abc}} for
   details). Four plots are currently available: a density plot of the
@@ -13,12 +12,11 @@
   scatter plot of the Euclidean distances as a function of the parameter
   values, and a Normal Q-Q plot of the residuals from the
   regression.
-  
 }
 \usage{
 \method{plot}{abc}(x, param, subsample = 1000, true = NULL, file = NULL,
 postscript = FALSE, onefile = TRUE, ask =
-!is.null(deviceIsInteractive()), ...)
+!is.null(deviceIsInteractive()), \dots)
 }
 \arguments{
   \item{x}{
