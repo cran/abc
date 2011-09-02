@@ -1,4 +1,5 @@
 \name{musigma2}
+\alias{musigma2}
 \alias{par.sim}
 \alias{stat.sim}
 \alias{stat.obs}

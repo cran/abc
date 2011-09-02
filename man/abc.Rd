@@ -22,19 +22,17 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
     a vector of the observed summary statistics.}
   \item{param}{
     a vector, matrix or data frame of the simulated parameter values,
-    i.e. the dependent variable(s) when \code{method} is \code{"loclinear"} or
-    \code{"neuralnet"}.}
+    i.e. the dependent variable(s) when \code{method} is \code{"loclinear"}, \code{"neuralnet"} or \code{"ridge"}.}
   \item{sumstat}{
     a vector, matrix or data frame of the simulated summary statistics,
-    i.e. the independent variables when \code{method} is \code{"loclinear"} or
-    \code{"neuralnet"}.}
+    i.e. the independent variables when \code{method} is \code{"loclinear"}, \code{"neuralnet"} or \code{"ridge"}.}
   \item{tol}{
     tolerance, the required proportion of points accepted nearest the
     target values.}
   \item{method}{
     a character string indicating the type of ABC algorithm to be
     applied.  Possible values are \code{"rejection"},
-    \code{"loclinear"}, and \code{"neuralnet"}. See also
+    \code{"loclinear"}, \code{"neuralnet"} and \code{"ridge"}. See also
     \code{Details}.}
   \item{hcorr}{
     logical, the conditional heteroscedastic model is applied if
@@ -55,7 +53,7 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
     \code{FALSE}.}
   \item{kernel}{
     a character string specifying the kernel to be used when
-    \code{method} is \code{"loclinear"} or \code{"neuralnet"}. Defaults
+    \code{method} is \code{"loclinear"}, \code{"neuralnet"} or \code{"ridge"}. Defaults
     to \code{"epanechnikov"}. See \code{\link{density}} for details.}
   \item{numnet}{
     the number of neural networks when \code{method} is
@@ -86,14 +84,14 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
   following components:
   
   \item{adj.values}{The regression adjusted values, when \code{method} is
-    \code{"loclinear"} or \code{"neuralnet"}.}
+    \code{"loclinear"}, \code{"neuralnet"} or \code{"ridge"}.}
   \item{unadj.values}{The unadjusted values that correspond to
     \code{"rejection"} \code{method}.}
   \item{ss}{The summary statistics for the accepted simulations.}
   \item{weights}{The regression weights, when \code{method} is
-    \code{"loclinear"} or \code{"neuralnet"}.}
+    \code{"loclinear"}, \code{"neuralnet"} or \code{"ridge"}.}
   \item{residuals}{The residuals from the regression when \code{method} is
-    \code{"loclinear"} or \code{"neuralnet"}. These are the "raw"
+    \code{"loclinear"}, \code{"neuralnet"} or \code{"ridge"}. These are the "raw"
     residuals from \code{\link{lsfit}} or \code{\link{nnet}},
     respectively, thus they are not on the original scale of the
     parameter(s).}
@@ -144,12 +142,17 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
   \eqn{S(y_0)}, and corrected according to a linear transform:
   \eqn{\theta^{*} = \theta - b(S(y) - S(y_0))}. \eqn{\theta^{*}}'s
   represent samples form the posterior distribution. This method calls
-  the function \code{\link{lsfit}} from the \code{stats} library. The
-  non-linear regression correction method (\code{"neuralnet"}) uses a
-  non-linear regression to minimize the departure from non-linearity
-  using the function \code{\link{nnet}}. The posterior samples of
-  parameters based on the rejection algorithm are returned as well, even
-  when one of the regression algorithms is used.
+  the function \code{\link{lsfit}} from the \code{stats} library.  When
+  using the \code{"loclinear"} method, a warning about the collinearity
+  of the design matrix of the regression might be issued. In that
+  situation, we recommend to rather use the related \code{"ridge"}
+  method that performs local-linear ridge regression and deals with the
+  collinearity issue.  The non-linear regression correction method
+  (\code{"neuralnet"}) uses a non-linear regression to minimize the
+  departure from non-linearity using the function \code{\link{nnet}}.
+  The posterior samples of parameters based on the rejection algorithm
+  are returned as well, even when one of the regression algorithms is
+  used.
   
   Several additional arguments can be specified when \code{method} is
   \code{"neuralnet"}. The method is based on the function
@@ -173,7 +176,7 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
   \code{method} \code{"neuralnet"} is recommended when dealing with a
   large number of summary statistics.
 
-  If \code{method} is \code{"loclinear"} or \code{"neuralnet"}, a
+  If \code{method} is \code{"loclinear"}, \code{"neuralnet"} or \code{"ridge"}, a
   correction for heteroscedasticity is applied by default (\code{hcorr =
   TRUE}).
 
@@ -226,8 +229,7 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
 }
 \examples{
 data(musigma2)
-## this data set contains five R objects, see ?musigma2 for
-## details
+?musigma2
 
 ## The rejection algorithm
 ##

@@ -128,34 +128,35 @@ c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
   \code{\link{summary.postpr}}
 }
 \examples{
-data(human)
-## five R objects are loaded. See ?human for details.
 
-## the two summary statistics: mean and variance of Tajima's D over 50
-## loci
-par(mfcol = c(1,2))
-boxplot(tajima.sim[,1]~models, main=names(tajima.sim)[1])
-boxplot(tajima.sim[,2]~models, main=names(tajima.sim)[2])
+## an arifical example
+ss <- cbind(runif(1000),rt(1000,df=20))
+postpr(target=c(3), index=c(rep("norm",500),rep("t",500)),
+sumstat=ss[,1], tol=.1, method="rejection")
+
+## human demographic history
+data(human)
+## five R objects are loaded. See ?human and vignette("abc") for details.
+
+## illustrate the informativeness of two summary statistics: mean and
+## variance of Tajima's D
+par(mfcol = c(1,3))
+boxplot(stat.3pops.sim[,"pi"]~models, main="Mean nucleotide diversity")
+boxplot(stat.3pops.sim[,"TajD.m"]~models, main="Mean Tajima's D")
+boxplot(stat.3pops.sim[,"TajD.v"]~models, main="Var in Tajima's D")
 
 ## model selection with ABC for the three populations, representing
 ## three continents
 
-## in Africa, population expansion is the most supported model
-africa <- postpr(tajima.obs["Hausa",], models, tajima.sim, tol=.01,
-method="mnlogistic")
-summary(africa)
+modsel.ha <- postpr(stat.voight["hausa",], models, stat.3pops.sim, tol=.05, method="mnlogistic")
+modsel.it <- postpr(stat.voight["italian",], models, stat.3pops.sim, tol=.05, method="mnlogistic")
+modsel.ch <- postpr(stat.voight["chinese",], models, stat.3pops.sim, tol=.05, method="mnlogistic")
+summary(modsel.ha)
+summary(modsel.it)
+summary(modsel.ch)
 
-## in Europe and Asia, population bottleneck is the most supported model
-europe <- postpr(tajima.obs["Italian",], models, tajima.sim, tol=.01,
-method="mnlogistic")
-summary(europe)
-asia <- postpr(tajima.obs["Chinese",], models, tajima.sim, tol=.01,
-method="mnlogistic")
-summary(asia)
-
-ss <- cbind(runif(1000),rt(1000,df=20))
-postpr(target=c(3), index=c(rep("norm",500),rep("t",500)),
-sumstat=ss[,1], tol=.1, method="rejection")
+## in Africa, population expansion is the most supported model, while in
+## Europe and Asia the population bottleneck
 
 }
 \keyword{htest}

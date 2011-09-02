@@ -53,9 +53,9 @@ postscript = FALSE, onefile = TRUE, ask =
     other parameters passed to \code{plot}.}
 }
 \details{
-  Different tolerance levels are plotted with
-  \code{\link{heat.colors}}. Smaller the tolerance levels correspond
-  to "more red" points.
+  Different tolerance levels are plotted with \code{\link{heat.colors}}.
+  Thus, the colors correspond to different levels of the tolerance rate
+  in an increasing order from red to yellow.
 }
 \seealso{
   \code{\link{cv4abc}}, \code{\link{abc}}

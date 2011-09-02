@@ -146,7 +146,7 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     else statnames <- colnames(sumstat)
     
     ## scale everything
-    ## #################
+    ## #############
     
     scaled.sumstat <- sumstat
     for(j in 1:nss){
@@ -158,7 +158,7 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     }
     
     ## calculate euclidean distance
-    ## ############################
+    ## #######################
     sum1 <- 0
     for(j in 1:nss){
         sum1 <- sum1 + (scaled.sumstat[,j]-target[j])^2
@@ -244,12 +244,14 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
         if(method == "loclinear"){
             
             fit1 <- lsfit(ss,unadj.values,wt=weights)
+            fit1$coefficients[fit1$qr$pivot] <- fit1$coefficients ## corrects an apparent bug in lsfit see: https://stat.ethz.ch/pipermail/r-devel/2009-March/052681.html
             pred <- t(fit1$coeff) %*% c(1,target)
             pred <- matrix(pred, ncol=numparam, nrow=sum(wt1), byrow=TRUE)
             residuals <- fit1$residuals
             
             if(hcorr == TRUE){
                 fit2 <- lsfit(ss,log(fit1$residuals^2),wt=weights)
+                fit2$coefficients[fit2$qr$pivot] <- fit2$coefficients ## corrects an apparent bug in lsfit see: https://stat.ethz.ch/pipermail/r-devel/2009-March/052681.html
                 pred.sd <- sqrt(exp(t(fit2$coeff) %*% c(1,target)))
                 pred.sd <- matrix(pred.sd, nrow=sum(wt1), ncol=numparam, byrow=T)
                 fv <- sqrt(exp(log(fit1$residuals^2) - fit2$residuals))
@@ -575,6 +577,7 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
     stop("Diagnostic plots can be displayed only when method is \"loclinear\" or \"neuralnet\".", cal.=F)
 
   if(!is.matrix(param) && !is.data.frame(param) && !is.vector(param)) stop("'param' has to be a matrix, data.frame or vector.", call.=F)
+  if(is.null(dim(param))) param <- matrix(param, ncol=1)
   if(is.data.frame(param)) param <- as.matrix(param)
   
   np <- abc.out$numparam
@@ -626,96 +629,96 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
     stop("The number parameters supplied in \"param\" is different from that in \"x\".", call.=F)
   }
   
-  for (i in 1:np){
-    if(transf[i] == "log"){
-      if(min(param[,i]) <= 0){
-        warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
-        x.tmp <- ifelse(param[,i] <= 0,max(param[,i]),param[,i])
-        x.tmp.min <- min(x.tmp)
-        param[,i] <- ifelse(param[,i] <= 0, x.tmp.min,param[,i])
-      }
-      param[,i] <- log(param[,i])
-      if(min(rej[,i]) <= 0){
-        warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
-        x.tmp <- ifelse(rej[,i] <= 0,max(rej[,i]),rej[,i])
-        x.tmp.min <- min(x.tmp)
-        rej[,i] <- ifelse(rej[,i] <= 0, x.tmp.min,rej[,i])
-      }
-      rej[,i] <- log(rej[,i])
-      if(min(res[,i]) <= 0){
-        warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
-        x.tmp <- ifelse(res[,i] <= 0,max(res[,i]),res[,i])
-        x.tmp.min <- min(x.tmp)
-        res[,i] <- ifelse(res[,i] <= 0, x.tmp.min,res[,i])
-      }
-      res[,i] <- log(res[,i])
-      if(!is.null(true)){
-        if(min(true[i]) <= 0){
-          x.tmp <- ifelse(true[i] <= 0,max(true[i]),true[i])
-          x.tmp.min <- min(x.tmp)
-          true[,i] <- ifelse(true[i] <= 0, x.tmp.min,true[i])
-        }
-        true[i] <- log(true[i])
-      }
-    }
-    else if(transf[i] == "logit"){
-      if(min(param[,i]) <= logit.bounds[i,1]){
-        x.tmp <- ifelse(param[,i] <= logit.bounds[i,1],max(param[,i]),param[,i])
-        x.tmp.min <- min(x.tmp)
-        param[,i] <- ifelse(param[,i] <= logit.bounds[i,1], x.tmp.min,param[,i])
-      }
-      if(max(param[,i]) >= logit.bounds[i,2]){
-        x.tmp <- ifelse(param[,i] >= logit.bounds[i,2],min(param[,i]),param[,i])
-        x.tmp.max <- max(x.tmp)
-        param[,i] <- ifelse(param[,i] >= logit.bounds[i,2], x.tmp.max,param[,i])
-      }
-      param[,i] <- (param[,i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
-      param[,i] <- log(param[,i]/(1-param[,i]))
+  ## for (i in 1:np){
+  ##   if(transf[i] == "log"){
+  ##     if(min(param[,i]) <= 0){
+  ##       warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
+  ##       x.tmp <- ifelse(param[,i] <= 0,max(param[,i]),param[,i])
+  ##       x.tmp.min <- min(x.tmp)
+  ##       param[,i] <- ifelse(param[,i] <= 0, x.tmp.min,param[,i])
+  ##     }
+  ##     param[,i] <- log(param[,i])
+  ##     if(min(rej[,i]) <= 0){
+  ##       warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
+  ##       x.tmp <- ifelse(rej[,i] <= 0,max(rej[,i]),rej[,i])
+  ##       x.tmp.min <- min(x.tmp)
+  ##       rej[,i] <- ifelse(rej[,i] <= 0, x.tmp.min,rej[,i])
+  ##     }
+  ##     rej[,i] <- log(rej[,i])
+  ##     if(min(res[,i]) <= 0){
+  ##       warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
+  ##       x.tmp <- ifelse(res[,i] <= 0,max(res[,i]),res[,i])
+  ##       x.tmp.min <- min(x.tmp)
+  ##       res[,i] <- ifelse(res[,i] <= 0, x.tmp.min,res[,i])
+  ##     }
+  ##     res[,i] <- log(res[,i])
+  ##     if(!is.null(true)){
+  ##       if(min(true[i]) <= 0){
+  ##         x.tmp <- ifelse(true[i] <= 0,max(true[i]),true[i])
+  ##         x.tmp.min <- min(x.tmp)
+  ##         true[,i] <- ifelse(true[i] <= 0, x.tmp.min,true[i])
+  ##       }
+  ##       true[i] <- log(true[i])
+  ##     }
+  ##   }
+  ##   else if(transf[i] == "logit"){
+  ##     if(min(param[,i]) <= logit.bounds[i,1]){
+  ##       x.tmp <- ifelse(param[,i] <= logit.bounds[i,1],max(param[,i]),param[,i])
+  ##       x.tmp.min <- min(x.tmp)
+  ##       param[,i] <- ifelse(param[,i] <= logit.bounds[i,1], x.tmp.min,param[,i])
+  ##     }
+  ##     if(max(param[,i]) >= logit.bounds[i,2]){
+  ##       x.tmp <- ifelse(param[,i] >= logit.bounds[i,2],min(param[,i]),param[,i])
+  ##       x.tmp.max <- max(x.tmp)
+  ##       param[,i] <- ifelse(param[,i] >= logit.bounds[i,2], x.tmp.max,param[,i])
+  ##     }
+  ##     param[,i] <- (param[,i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
+  ##     param[,i] <- log(param[,i]/(1-param[,i]))
 
-      if(min(rej[,i]) <= logit.bounds[i,1]){
-        x.tmp <- ifelse(rej[,i] <= logit.bounds[i,1],max(rej[,i]),rej[,i])
-        x.tmp.min <- min(x.tmp)
-        rej[,i] <- ifelse(rej[,i] <= logit.bounds[i,1], x.tmp.min,rej[,i])
-      }
-      if(max(rej[,i]) >= logit.bounds[i,2]){
-        x.tmp <- ifelse(rej[,i] >= logit.bounds[i,2],min(rej[,i]),rej[,i])
-        x.tmp.max <- max(x.tmp)
-        rej[,i] <- ifelse(rej[,i] >= logit.bounds[i,2], x.tmp.max,rej[,i])
-      }
-      rej[,i] <- (rej[,i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
-      rej[,i] <- log(rej[,i]/(1-rej[,i]))
+  ##     if(min(rej[,i]) <= logit.bounds[i,1]){
+  ##       x.tmp <- ifelse(rej[,i] <= logit.bounds[i,1],max(rej[,i]),rej[,i])
+  ##       x.tmp.min <- min(x.tmp)
+  ##       rej[,i] <- ifelse(rej[,i] <= logit.bounds[i,1], x.tmp.min,rej[,i])
+  ##     }
+  ##     if(max(rej[,i]) >= logit.bounds[i,2]){
+  ##       x.tmp <- ifelse(rej[,i] >= logit.bounds[i,2],min(rej[,i]),rej[,i])
+  ##       x.tmp.max <- max(x.tmp)
+  ##       rej[,i] <- ifelse(rej[,i] >= logit.bounds[i,2], x.tmp.max,rej[,i])
+  ##     }
+  ##     rej[,i] <- (rej[,i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
+  ##     rej[,i] <- log(rej[,i]/(1-rej[,i]))
 
-      if(min(res[,i]) <= logit.bounds[i,1]){
-        x.tmp <- ifelse(res[,i] <= logit.bounds[i,1],max(res[,i]),res[,i])
-        x.tmp.min <- min(x.tmp)
-        res[,i] <- ifelse(res[,i] <= logit.bounds[i,1], x.tmp.min,res[,i])
-      }
-      if(max(res[,i]) >= logit.bounds[i,2]){
-        x.tmp <- ifelse(res[,i] >= logit.bounds[i,2],min(res[,i]),res[,i])
-        x.tmp.max <- max(x.tmp)
-        res[,i] <- ifelse(res[,i] >= logit.bounds[i,2], x.tmp.max,res[,i])
-      }
-      res[,i] <- (res[,i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
-      res[,i] <- log(res[,i]/(1-res[,i]))
+  ##     if(min(res[,i]) <= logit.bounds[i,1]){
+  ##       x.tmp <- ifelse(res[,i] <= logit.bounds[i,1],max(res[,i]),res[,i])
+  ##       x.tmp.min <- min(x.tmp)
+  ##       res[,i] <- ifelse(res[,i] <= logit.bounds[i,1], x.tmp.min,res[,i])
+  ##     }
+  ##     if(max(res[,i]) >= logit.bounds[i,2]){
+  ##       x.tmp <- ifelse(res[,i] >= logit.bounds[i,2],min(res[,i]),res[,i])
+  ##       x.tmp.max <- max(x.tmp)
+  ##       res[,i] <- ifelse(res[,i] >= logit.bounds[i,2], x.tmp.max,res[,i])
+  ##     }
+  ##     res[,i] <- (res[,i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
+  ##     res[,i] <- log(res[,i]/(1-res[,i]))
 
 
 
-      if(!is.null(true)){
-        if(min(true[i]) <= logit.bounds[i,1]){
-          x.tmp <- ifelse(true[i] <= logit.bounds[i,1],max(true[i]),true[i])
-          x.tmp.min <- min(x.tmp)
-          true[i] <- ifelse(true[i] <= logit.bounds[i,1], x.tmp.min,true[i])
-        }
-        if(max(true[i]) >= logit.bounds[i,2]){
-          x.tmp <- ifelse(true[i] >= logit.bounds[i,2],min(true[i]),true[i])
-          x.tmp.max <- max(x.tmp)
-          true[i] <- ifelse(true[i] >= logit.bounds[i,2], x.tmp.max,true[i])
-        }
-        true[i] <- (true[i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
-        true[i] <- log(true[i]/(1-true[i]))
-      }
-    }
-  } # end of parameter transformations
+  ##     if(!is.null(true)){
+  ##       if(min(true[i]) <= logit.bounds[i,1]){
+  ##         x.tmp <- ifelse(true[i] <= logit.bounds[i,1],max(true[i]),true[i])
+  ##         x.tmp.min <- min(x.tmp)
+  ##         true[i] <- ifelse(true[i] <= logit.bounds[i,1], x.tmp.min,true[i])
+  ##       }
+  ##       if(max(true[i]) >= logit.bounds[i,2]){
+  ##         x.tmp <- ifelse(true[i] >= logit.bounds[i,2],min(true[i]),true[i])
+  ##         x.tmp.max <- max(x.tmp)
+  ##         true[i] <- ifelse(true[i] >= logit.bounds[i,2], x.tmp.max,true[i])
+  ##       }
+  ##       true[i] <- (true[i]-logit.bounds[i,1])/(logit.bounds[i,2]-logit.bounds[i,1])
+  ##       true[i] <- log(true[i]/(1-true[i]))
+  ##     }
+  ##   }
+  ## } # end of parameter transformations
   
   ## devices
   ## ########
@@ -754,9 +757,10 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
     myylim <- range(c(post.d$y, rej.d$y, prior.d$y))
     par(cex = 1, cex.main = 1.2, cex.lab = 1.1, lwd = 2)
 
-    if(transf[i] == "none") myxlab <- parnames[i]
-    else if(transf[i] == "log") myxlab <- paste("log(", parnames[i], ")", sep="")
-    else if(transf[i] == "logit") myxlab <- paste("log(", parnames[i], "/(1-",parnames[i],"))", sep="")
+    ##if(transf[i] == "none")
+    myxlab <- parnames[i]
+    ##else if(transf[i] == "log") myxlab <- paste("log(", parnames[i], ")", sep="")
+    ##else if(transf[i] == "logit") myxlab <- paste("log(", parnames[i], "/(1-",parnames[i],"))", sep="")
     
     ## 1. prior
     ## ########

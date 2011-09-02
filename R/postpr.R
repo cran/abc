@@ -166,63 +166,66 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, corr=TRUE, 
     ok <- index[wt1] # models accepted
     fml <- as.formula(paste("ok ~ ", paste(statnames, collapse= "+")))
       
-    if ( length(unique(ok)) < length(mymodels)) {
+    if(length(unique(ok)) < length(mymodels)) {
       warning(paste("There are",length(mymodels),"models but only",length(unique(ok)), "for which simulations have been accepted.\nNo regression is performed, method is set to rejection.\nConsider increasing the tolerance rate."),sep="", call.=F, immediate=T)
       weights <- NULL
       pred.logit <- NULL
       method <- "rejection"
     }
-      
-    else if(method == "mnlogistic"){
-      fit1 <- multinom(fml, data = ss, weigths = weights, trace=F)
+
+    ## calculating the number of weights for multinom
+    mymnw <- (nss+2) * length(mymodels)
+    
+    if(method == "mnlogistic"){
+      fit1 <- multinom(fml, data = ss, weigths = weights, trace=F, MaxNWts = mymnw + 1, ...)
       target <- as.data.frame(matrix(target, nrow=1))
       names(target) <- statnames
       pred <- predict(fit1, target, type="probs")
       if(length(pred) == 1){
-        pred<-c(1-pred,pred)
-        names(pred)<-levels(ok)
+        pred <- c(1-pred,pred)
+        names(pred) <- levels(ok)
       }
-  }
+    }
     
     else if(method == "neuralnet"){
-        lambda <- sample(lambda, numnet, replace=T)
-        target <- as.data.frame(matrix(target, nrow=1))
-        names(target) <- statnames
-        pred <- 0
-        for(i in 1:numnet){
-            fit1 <- nnet(fml, data=ss, weights = weights, decay = lambda[i],
-                         size = sizenet, trace = trace, linout = linout, maxit = maxit, ...)
-            if(length(mymodels)==2)
-            {
-        	auxm<-predict(fit1, target, type="raw")
-        	pred <- pred + c(1-auxm,auxm)
-            }
-            else
-        	pred <- pred + predict(fit1, target, type="raw")
-        }
-        pred <- pred/numnet
-        if(length(mymodels)!=2)
+      lambda <- sample(lambda, numnet, replace=T)
+      target <- as.data.frame(matrix(target, nrow=1))
+      names(target) <- statnames
+      pred <- 0
+      for(i in 1:numnet){
+        fit1 <- nnet(fml, data=ss, weights = weights, decay = lambda[i],
+                     size = sizenet, trace = trace, linout = linout, maxit = maxit, ...)
+        if(length(mymodels)==2)
+          {
+            auxm<-predict(fit1, target, type="raw")
+            pred <- pred + c(1-auxm,auxm)
+          }
+        else
+          pred <- pred + predict(fit1, target, type="raw")
+      }
+      pred <- pred/numnet
+      if(length(mymodels)!=2)
         {
-            temp <- rep(0, length(mymodels))
-            names(temp) <- mymodels
-            temp[match(colnames(pred), mymodels)] <- pred
-            pred <- temp
+          temp <- rep(0, length(mymodels))
+          names(temp) <- mymodels
+          temp[match(colnames(pred), mymodels)] <- pred
+          pred <- temp
         }
-        else names(pred) <- levels(ok)
+      else names(pred) <- levels(ok)
     }
     ## correction for potentially different numbers of simulations per models
     ratio <- (pred*length(index)*tol) / table(index)
     pred <- ratio/sum(ratio)
     attributes(dimnames(pred)) <- NULL
-}
-
+  }
+  
   if(rejmethod){
-      postpr.out <- list(values=values, ss=ss, call=call, na.action=gwt, method=method, corr=corr, nmodels=table(index),
-                         numstat=nss, names=list(models=mymodels, statistics.names=statnames))
+    postpr.out <- list(values=values, ss=ss, call=call, na.action=gwt, method=method, corr=corr, nmodels=table(index),
+                       numstat=nss, names=list(models=mymodels, statistics.names=statnames))
   }
   else{
-      postpr.out <- list(values=values, pred=pred, ss=ss, weights=weights, call=call, na.action=gwt, method=method, corr=corr, nmodels=c(table(index)),
-                         numstat=nss, names=list(models=mymodels, statistics.names=statnames))
+    postpr.out <- list(values=values, pred=pred, ss=ss, weights=weights, call=call, na.action=gwt, method=method, corr=corr, nmodels=c(table(index)),
+                       numstat=nss, names=list(models=mymodels, statistics.names=statnames))
   }
   class(postpr.out) <- "postpr"
   invisible(postpr.out)

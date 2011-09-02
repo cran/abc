@@ -114,14 +114,9 @@ subset = NULL, kernel = "epanechnikov", numnet = 10, sizenet = 5, lambda
 }
 \examples{
 data(human)
-africa <- postpr(tajima.obs["Hausa",], models, tajima.sim, tol=.1,
-method="mnlogistic")
-summary(africa)
-cv.africa <- cv4postpr(models, tajima.sim, postpr.out=africa, nval=20,
-tols=c(.01, .02))
-summary(cv.africa)
-class(cv.africa)
-plot(cv.africa, names.arg=c("Bottleneck", "Constant", "Exponential"))
+cv.modsel <- cv4postpr(models, stat.3pops.sim, nval=10, tols=c(.005,.01), method="mnlogistic")
+summary(cv.modsel)
+plot(cv.modsel, names.arg=c("Bottleneck", "Constant", "Exponential"))
 }
 \keyword{models}
 \keyword{htest}

@@ -1,0 +1,20 @@
+\BOOKMARK [1][-]{section*.2}{Summary}{}% 1
+\BOOKMARK [1][-]{section*.3}{Introdunction}{}% 2
+\BOOKMARK [2][-]{section*.4}{Installation}{section*.3}% 3
+\BOOKMARK [2][-]{section*.5}{Methods and classes in R }{section*.3}% 4
+\BOOKMARK [1][-]{section*.6}{A brief introduction to ABC}{}% 5
+\BOOKMARK [2][-]{section*.7}{Parameter inference}{section*.6}% 6
+\BOOKMARK [2][-]{section*.8}{Cross-validation}{section*.6}% 7
+\BOOKMARK [2][-]{section*.9}{Model selection}{section*.6}% 8
+\BOOKMARK [2][-]{section*.10}{Model misclassification}{section*.6}% 9
+\BOOKMARK [1][-]{section*.11}{A walk-though example: human demographic history}{}% 10
+\BOOKMARK [2][-]{section*.12}{Getting started}{section*.11}% 11
+\BOOKMARK [2][-]{section*.13}{The human data}{section*.11}% 12
+\BOOKMARK [2][-]{section*.14}{Background}{section*.11}% 13
+\BOOKMARK [2][-]{section*.15}{The demographic models}{section*.11}% 14
+\BOOKMARK [2][-]{section*.17}{Model selection}{section*.11}% 15
+\BOOKMARK [2][-]{section*.19}{Posterior predictive checks}{section*.11}% 16
+\BOOKMARK [2][-]{section*.21}{Cross-validation}{section*.11}% 17
+\BOOKMARK [2][-]{section*.23}{Parameter inference}{section*.11}% 18
+\BOOKMARK [1][-]{section*.26}{Conclusions}{}% 19
+\BOOKMARK [1][-]{section*.27}{Bibliography}{}% 20

@@ -30,6 +30,7 @@ cv4postpr <- function(index, sumstat, postpr.out = NULL, nval, tols,
   linout <- TRUE
   ## checks:
   ## ######
+  if(missing(nval)) stop("'nval' must be supplied.", call.=F)
   if(is.null(postpr.out) && missing(method)) stop("Method must be supplied when 'postpr.out' is NULL.", call.=F)
   if(length(index)!=na.omit(length(index))) stop("'index' contains missing values. Models must be specified for each simulation.", call.=F)
 
@@ -111,8 +112,8 @@ cv4postpr <- function(index, sumstat, postpr.out = NULL, nval, tols,
         myindex <- index[-mysamp]
         mysumstat <- sumstat[-mysamp,]
         mysubset <- subset[-mysamp]
-        subres <- postpr(target = mytarget, index = myindex, sumstat = mysumstat, tol=mytol,
-                         subset = mysubset, method = method, kernel = kernel)
+        subres <- withCallingHandlers( postpr(target = mytarget, index = myindex, sumstat = mysumstat, tol=mytol,
+                         subset = mysubset, method = method, kernel = kernel), warning = namesWarningFilter)
         if(subres$method=="rejection") res[i,] <- summary.postpr(subres, print = F, ...)$Prob
         if(subres$method=="mnlogistic") res[i, ] <- summary.postpr(subres, print = F, ...)$mnlogistic$Prob
         if(subres$method=="neuralnet") res[i, ] <- summary.postpr(subres, print = F, ...)$neuralnet$Prob
@@ -126,13 +127,13 @@ cv4postpr <- function(index, sumstat, postpr.out = NULL, nval, tols,
         call("postpr", target = quote(target), index = quote(index), sumstat = quote(sumstat), tol= mytol,
              subset = quote(subset), method = subres$method, kernel = subres$kernel)
   }
-
+  
   cv4postpr.out <-
     list(calls = mycall, cvsamples = cvsamp, tols = tols, true = index[cvsamp],
          estim = allnames,
          model.probs = allprobs,
          method = method, names = list(models = mymodels, statistics.names = statnames), seed = seed)
-  
+
   class(cv4postpr.out) <- "cv4postpr"
   invisible(cv4postpr.out)
   
