@@ -1,3 +1,14 @@
+Changes in abc 1.6
+============================
+
+---------
+  o Add 2 times (mnlogistic and neural net)
+  		ss<-data.frame(ss)
+        colnames(ss)<-statnames 
+        in postpr so that mnlogistic and neural net work when there is only one sum stat
+  o Michael Blum is the unique maintainer conforming to the new CRAN policy
+
+
 Changes in abc 1.5
 ============================
 

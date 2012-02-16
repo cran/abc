@@ -451,12 +451,12 @@ applying this function on the real data, we perform a cross-validation
 for model selection (\code{cv4postpr}) to evaluate if ABC can, at all,
 distinguish between the three models. The cross-validation might take a
 long time to run. At this point, we might just want just a quick result to
-illustrate the use of the function, so we run only 50 cross-validation
+illustrate the use of the function, so we run only 10 cross-validation
 simulations, and summarize and the results using the following
 commands:
 
 <<label=modsel>>=
-cv.modsel <- cv4postpr(models, stat.3pops.sim, nval=50, tol=.01, method="mnlogistic")
+cv.modsel <- cv4postpr(models, stat.3pops.sim, nval=5, tol=.01, method="mnlogistic")
 s <- summary(cv.modsel)
 @ 
 
@@ -616,8 +616,8 @@ with a smaller value of \code{nval} to compare different tolerance
 rates, and also different estimation methods.
 
 <<>>=
-cv.res.rej <- cv4abc(data.frame(Na=par.italy.sim[,"Ne"]), stat.italy.sim, nval=100, tols=c(.005,.01, 0.05), method="rejection")
-cv.res.reg <- cv4abc(data.frame(Na=par.italy.sim[,"Ne"]), stat.italy.sim, nval=100, tols=c(.005,.01, 0.05), method="loclinear")
+cv.res.rej <- cv4abc(data.frame(Na=par.italy.sim[,"Ne"]), stat.italy.sim, nval=10, tols=c(.005,.01, 0.05), method="rejection")
+cv.res.reg <- cv4abc(data.frame(Na=par.italy.sim[,"Ne"]), stat.italy.sim, nval=10, tols=c(.005,.01, 0.05), method="loclinear")
 summary(cv.res.rej)
 summary(cv.res.reg)
 @ 

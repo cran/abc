@@ -177,6 +177,8 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, corr=TRUE, 
     mymnw <- (nss+2) * length(mymodels)
     
     if(method == "mnlogistic"){
+        ss<-data.frame(ss)
+        colnames(ss)<-statnames
       fit1 <- multinom(fml, data = ss, weigths = weights, trace=F, MaxNWts = mymnw + 1, ...)
       target <- as.data.frame(matrix(target, nrow=1))
       names(target) <- statnames
@@ -188,6 +190,8 @@ postpr <- function(target, index, sumstat, tol, subset=NULL, method, corr=TRUE, 
     }
     
     else if(method == "neuralnet"){
+        ss<-data.frame(ss)
+        colnames(ss)<-statnames
       lambda <- sample(lambda, numnet, replace=T)
       target <- as.data.frame(matrix(target, nrow=1))
       names(target) <- statnames

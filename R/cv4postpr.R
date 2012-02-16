@@ -190,7 +190,7 @@ plot.cv4postpr <- function(x, probs=FALSE, file = NULL, postscript = FALSE, onef
   nmodels <- length(cv4postpr.out$names$models)
   nval <- length(true)/nmodels
   
-  if(is.null(caption)) caption <- "Misclassification of models"
+  if(is.null(caption)) caption <- "Confusion matrix"
   
   ## Devices
   save.devAskNewPage <- devAskNewPage()
