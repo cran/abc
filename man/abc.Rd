@@ -113,6 +113,10 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
     randomly from the supplied vector of values.}
   \item{numparam}{Number of parameters used.}
   \item{numstat}{Number of summary statistics used.}
+  \item{aic}{The sum of the AIC of the \code{numparam} regression.
+  Returned only if \code{method} is \code{"loclinear"}. It is used for
+  selecting informative summary statistics.}
+  \item{bic}{The same but with the BIC.} 
   \item{names}{A list with two elements: \code{parameter.names} and
     \code{statistics.names}. Both contain a vector of character strings
     with the parameter and statistics names, respectively.}

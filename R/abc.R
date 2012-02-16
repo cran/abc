@@ -23,130 +23,108 @@
 ######################################################################
 
 abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
-                transf = "none", logit.bounds = NULL, subset = NULL, kernel = "epanechnikov",
-                ## additional parameters if method = "neuralnet"
-                numnet = 10, sizenet = 5, lambda = c(0.0001,0.001,0.01), trace = FALSE, maxit = 500, ...){ 
+                transf = "none", logit.bounds = c(0,0), subset = NULL,
+                kernel = "epanechnikov", numnet = 10, sizenet = 5,
+                lambda = c(0.0001,0.001,0.01), trace = FALSE, maxit =
+                500, ...){
     
     call <- match.call()
     
     ## general checks that the function is used correctly
     ## ###################################################
     
-    if(missing(target)) stop("'target' is missing with no default", call.=F)
-    if(missing(param)) stop("'param' is missing with no default", call.=F)
-    if(missing(sumstat)) stop("'sumstat' is missing with no default", call.=F)
-    if(!is.matrix(param) && !is.data.frame(param) && !is.vector(param)) stop("'param' has to be a matrix, data.frame or vector.", call.=F)
-    if(!is.matrix(sumstat) && !is.data.frame(sumstat) && !is.vector(sumstat)) stop("'sumstat' has to be a matrix, data.frame or vector.", call.=F)
-    if(missing(tol)) stop("'tol' is missing with no default", call.=F)
-    if(missing(method)) stop("'method' is missing with no default", call.=F)
-    if(!any(method == c("rejection", "loclinear", "neuralnet")))
-        stop("Method must be rejection, loclinear, or neuralnet", call.=F)
+    if(missing(target)) stop("'target' is missing")
+    if(missing(param)) stop("'param' is missing")
+    if(missing(sumstat)) stop("'sumstat' is missing")
+    if(!is.matrix(param) && !is.data.frame(param) && !is.vector(param)) stop("'param' has to be a matrix, data.frame or vector.")
+    if(!is.matrix(sumstat) && !is.data.frame(sumstat) && !is.vector(sumstat)) stop("'sumstat' has to be a matrix, data.frame or vector.")
+    if(missing(tol)) stop("'tol' is missing")
+    if(missing(method)) stop("'method' is missing with no default")  
+    if(!any(method == c("rejection", "loclinear", "neuralnet","ridge"))){
+        stop("Method must be rejection, loclinear, or neuralnet or ridge")
+    }
     if(method == "rejection") rejmethod <- TRUE
     else rejmethod <- FALSE
     
     if(!any(kernel == c("gaussian", "epanechnikov", "rectangular", "triangular", "biweight", "cosine"))){
         kernel <- "epanechnikov"
-        warning("Kernel is incorrectly defined. Setting to default (Epanechnikov)", call.=F, immediate.=T)
+        warning("Kernel is incorrectly defined. Setting to default (Epanechnikov)")
     }
 
     if(is.data.frame(param)) param <- as.matrix(param)
     if(is.data.frame(sumstat)) sumstat <- as.matrix(sumstat)
     if(is.list(target)) target <- unlist(target)
     if(is.vector(sumstat)) sumstat <- matrix(sumstat, ncol=1)
-    if(length(target)!=dim(sumstat)[2]) stop("Number of summary statistics in 'target' has to be the same as in 'sumstat'.", call.=F)
+    if(length(target)!=dim(sumstat)[2]) stop("Number of summary statistics in 'target' has to be the same as in 'sumstat'.")
     
     ## stop if zero var in sumstat
     ## #########################
     nss <- length(sumstat[1,])
     cond1 <- !any(as.logical(apply(sumstat, 2, function(x) length(unique(x))-1)))
-    if(cond1) stop("Zero variance in the summary statistics.", call.=F)
-
-    ## numparam
+    if(cond1) stop("Zero variance in the summary statistics.")
+    
+    
+    ## transformations
+    ## ################
+    ltransf <- length(transf)
     if(is.vector(param)){
         numparam <- 1
         param <- matrix(param, ncol=1)
     }
     else numparam <- dim(param)[2]
-
-    ## transformations
-    ## ################
-    ltransf <- length(transf)
-    
-    if(!prod(unique(transf) %in% c("none","log","logit")))
-      stop("Transformations must be none, log, or logit.", call.=F)
+    for (i in 1:ltransf){
+        if(sum(transf[i] == c("none","log","logit")) == 0){
+            stop("Transformations must be none, log, or logit.")
+        }
+        if(transf[i]=="logit"){
+            if(logit.bounds[i,1] >= logit.bounds[i,2]){
+                stop("Logit bounds are incorrect.")       
+            }
+        }
+    }
+    ## if no logit change logit.bounds to NULL
+    ## if(any(transf) == "logit") logit.bounds <- NULL
     
     ## no transformation should be applied when rejmethod is true
     if(rejmethod){
-      if(!all(transf == "none")){
-        warning("No transformation is applied when the simple rejection is used.", call.=F, immediate.=T)
-      }
-      transf[1:numparam] <- "none"
+        if(!all(transf == "none")){
+            warning("No transformation is applied when the simple rejection is used.", call.=F)
+        }
+        transf[1:numparam] <- "none"
     }
     else{
-      if("logit" %in% transf & is.null(logit.bounds)) stop("Define logit bounds for each parameter (NA's for parameters that are not to be \"logit\" transformed).", call.=F)
-      else if ("logit" %in% transf & length(logit.bounds)==2) logit.bounds <- matrix(logit.bounds, ncol=2)
-      if(numparam != ltransf){
-        ## transf has only one value
-        if(ltransf == 1){
-          if(transf == "log"){
-            transf <- rep(transf[1], numparam)
-            warning("All parameters will be \"log\" transformed.", call.=F, immediate.=T)
-          }
-          else if(transf=="none"){
-            transf <- rep(transf[1], numparam)
-            warning("None of the parameters will be transformed.", call.=F, immediate.=T)
-          }
-          else if(transf=="logit" & dim(logit.bounds)[1]==numparam){
-            transf <- rep(transf[1], numparam)
-            ltransf <- numparam
-            warning("All parameters will be \"logit\" transformed with their corresponding logit bounds.", call.=F, immediate.=T)
-          }
-          else if(transf=="logit" & length(logit.bounds)==2){
-            transf <- rep(transf[1], numparam)
-            ltransf <- numparam
-            logit.bounds <- matrix(logit.bounds, ncol=2, nrow=numparam, byrow=T)
-            warning("All parameters will be \"logit\" transformed with the same given logit bounds.", call.=F, immediate.=T)
-          }
+        if(numparam != ltransf){
+            if(length(transf) == 1){
+                transf <- rep(transf[1], numparam)
+                warning("All parameters are \"", transf[1], "\" transformed.", sep="", call.=F)
+            }
+            else stop("Number of parameters is not the same as number of transformations.", sep="", call.=F)
         }
-        else stop("Number of transformations must be the same as the number of parameters.", call.=F)
-      }
-      if("logit" %in% transf){
-        if(is.null(logit.bounds)) stop("Define logit bounds for each parameter (NA's for parameters that are not to be \"logit\" transformed).", call.=F)
-        else if (dim(logit.bounds)[1]!=numparam)
-          stop("Matrix logit bounds must have as many lines as parameters.", call.=F)
-        for (i in 1:ltransf){
-          if(transf[i]=="logit"){
-            if(sum(is.na(logit.bounds[i,]))) stop("Logit bounds cannot be NA for a parameter that is to be \"logit\" transformed.", call.=F)
-            if(logit.bounds[i,1] >= logit.bounds[i,2]) stop("Logit bounds are incorrect for one or more parameter(s). The 1st bound must be larger or equal to the 2nd bound.", call.=F)
-          }
-          else logit.bounds[i,] <- c(NA, NA)
-        }
-      }
     }
     
     ## parameter and/or sumstat values that are to be excluded
     ## #######################################################
     gwt <- rep(TRUE,length(sumstat[,1]))
     gwt[attributes(na.omit(sumstat))$na.action] <- FALSE
-    if(is.null(subset)) subset <- rep(TRUE,length(sumstat[,1]))
+    if(missing(subset)) subset <- rep(TRUE,length(sumstat[,1]))
     gwt <- as.logical(gwt*subset)
     
     ## extract names of parameters and statistics if given
     ## ###################################################
     if(!length(colnames(param))){
-        warning("No parameter names are given, using P1, P2, ...", immediate.=T, call.=F)
+        warning("No parameter names are given, using P1, P2, ...")
         paramnames <- paste("P", 1:numparam, sep="")
     }
     else paramnames <- colnames(param)
     
     if(!length(colnames(sumstat))){
-        warning("No summary statistics names are given, using S1, S2, ...", immediate.=T, call.=F)
+        warning("No summary statistics names are given, using S1, S2, ...")
         statnames <- paste("S", 1:nss, sep="")
     }
     else statnames <- colnames(sumstat)
     
     ## scale everything
-    ## #############
+    ## #################
     
     scaled.sumstat <- sumstat
     for(j in 1:nss){
@@ -158,7 +136,7 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     }
     
     ## calculate euclidean distance
-    ## #######################
+    ## ############################
     sum1 <- 0
     for(j in 1:nss){
         sum1 <- sum1 + (scaled.sumstat[,j]-target[j])^2
@@ -169,22 +147,22 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     dist[!gwt] <- floor(max(dist[gwt])+10)
     
     ## wt1 defines the region we're interested in
-    abstol <- quantile(dist,tol)
+    #ds <- quantile(dist,tol)
     if(kernel == "gaussian") wt1 <- rep(TRUE, length(dist)) ## ???????????????????????????
-    else{
-        ceiling(length(dist)*tol)->nacc
-        sort(dist)[nacc]->ds
-        wt1 <- (dist <= ds)
-        aux<-cumsum(wt1)
-        wt1 <- wt1 & (aux<=nacc)
+    else 
+    {
+    	ceiling(length(dist)*tol)->nacc
+    	sort(dist)[nacc]->ds
+    	wt1 <- (dist <= ds)
+    	aux<-cumsum(wt1)
+    	wt1 <- wt1 & (aux<=nacc)
     }
-    
     ## transform parameters
     ## ######################
     for (i in 1:numparam){
         if(transf[i] == "log"){
             if(min(param[,i]) <= 0){
-                warning("Correcting out of bounds values for \"log\" transformed parameters.", call.=F, immediate.=T)
+                cat("log transform: values out of bounds - correcting...")
                 x.tmp <- ifelse(param[,i] <= 0,max(param[,i]),param[,i])
                 x.tmp.min <- min(x.tmp)
                 param[,i] <- ifelse(param[,i] <= 0, x.tmp.min,param[,i])
@@ -209,20 +187,20 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     
     ## select summary statistics in region
     ## ###################################
-    ss <- scaled.sumstat[wt1,]
+    ss <- sumstat[wt1,]
     unadj.values <- param[wt1,]
-
+    
     ## if simple rejection or in the selected region there is no var in sumstat
     ## ########################################################################
-    statvar <- as.logical(apply(scaled.sumstat[wt1, , drop=FALSE], 2, function(x) length(unique(x))-1))
+    statvar <- as.logical(apply(cbind(sumstat[wt1,]), 2, function(x) length(unique(x))-1))
     cond2 <- !any(statvar)
     
     if(cond2 && !rejmethod)
-        stop("Zero variance in the summary statistics in the selected region. Try: checking summary statistics, choosing larger tolerance, or rejection method.", call.=F)
+        stop("Zero variance in the summary statistics in the selected region. Try: checking summary statistics, choosing larger tolerance, or rejection method.")
     
     if(rejmethod){
-        if(cond2) warning("Zero variance in the summary statistics in the selected region. Check summary statistics, consider larger tolerance.", call.=F, immediate.=T)
-        weights <- NULL
+        if(cond2) warning("Zero variance in the summary statistics in the selected region. Check summary statistics, consider larger tolerance.")
+        weights <- rep(1,length=sum(wt1))
         adj.values <- NULL
         residuals <- NULL
         lambda <- NULL
@@ -232,33 +210,51 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
         if(cond2) cat("Warning messages:\nStatistic(s)", statnames[!statvar], "has/have zero variance in the selected region.\nConsider using larger tolerance or the rejection method or discard this/these statistics, which might solve the collinearity problem in 'lsfit'.\n", sep=", ")
         
         ## weights
-        if(kernel == "epanechnikov") weights <- 1 - (dist[wt1]/abstol)^2
-        if(kernel == "rectangular") weights <- dist[wt1]/abstol
-        if(kernel == "gaussian") weights <- exp(-.5*dist/abstol^2)/sqrt(2*pi)
-        if(kernel == "triangular") weights <- 1 - abs(dist[wt1]/abstol)
-        if(kernel == "biweight") weights <- (1 - (dist[wt1]/abstol)^2)^2
-        if(kernel == "cosine") weights <- cos(pi/2*dist[wt1]/abstol)
+        if(kernel == "epanechnikov") weights <- 1 - (dist[wt1]/ds)^2
+        if(kernel == "rectangular") weights <- dist[wt1]/ds
+        if(kernel == "gaussian") weights <- 1/sqrt(2*pi)*exp(-0.5*(dist/ds)^2)
+        if(kernel == "triangular") weights <- 1 - abs(dist[wt1]/ds)
+        if(kernel == "biweight") weights <- (1 - (dist[wt1]/ds)^2)^2
+        if(kernel == "cosine") weights <- cos(pi/2*dist[wt1]/ds)
         
         ## regression correction
         ## ######################
         if(method == "loclinear"){
             
-            fit1 <- lsfit(ss,unadj.values,wt=weights)
-            fit1$coefficients[fit1$qr$pivot] <- fit1$coefficients ## corrects an apparent bug in lsfit see: https://stat.ethz.ch/pipermail/r-devel/2009-March/052681.html
-            pred <- t(fit1$coeff) %*% c(1,target)
+           fit1 <- lsfit(scaled.sumstat[wt1,],param[wt1,],wt=weights)
+            #pred <- t(fit1$coeff) %*% c(1,target)
+            pred <- t(structure(cbind(fit1$coefficients)[fit1$qr$pivot,], names=names(fit1$coefficients))) %*% c(1,target)
+            
             pred <- matrix(pred, ncol=numparam, nrow=sum(wt1), byrow=TRUE)
-            residuals <- fit1$residuals
+            #residuals <- fit1$residuals
+            residuals<-param[wt1,]-t(t(structure(cbind(fit1$coefficients)[fit1$qr$pivot,], names=names(fit1$coefficients))) %*%t(cbind(1,scaled.sumstat[wt1,])))
+	    	residuals<-cbind(residuals)
+	    	#rrr<<-residuals
+	    	the_m<-apply(residuals,FUN=mean,2)
+	    	residuals<-sapply(1:numparam,FUN=function(x){residuals[,x]-the_m[x]})
+	    	pred <- sapply(1:numparam,FUN=function(x){pred[,x]+the_m[x]})
+
+            
+            sigma2<-apply(as.matrix(residuals),FUN=function(x){sum((x)^2 *weights)/sum(weights)},MARGIN=2)	
+            aic<-sum(wt1)*sum(log(sigma2))+2*(nss+1)*numparam
+            bic<-sum(wt1)*sum(log(sigma2))+log(sum(wt1))*(nss+1)*numparam
             
             if(hcorr == TRUE){
-                fit2 <- lsfit(ss,log(fit1$residuals^2),wt=weights)
-                fit2$coefficients[fit2$qr$pivot] <- fit2$coefficients ## corrects an apparent bug in lsfit see: https://stat.ethz.ch/pipermail/r-devel/2009-March/052681.html
-                pred.sd <- sqrt(exp(t(fit2$coeff) %*% c(1,target)))
+                 fit2 <- lsfit(scaled.sumstat[wt1,],log(residuals^2),wt=weights)
+                auxaux<-t(structure(cbind(fit2$coefficients)[fit2$qr$pivot,], names=names(fit2$coefficients))) %*% c(1,target)
+                pred.sd <- sqrt(exp(auxaux))
                 pred.sd <- matrix(pred.sd, nrow=sum(wt1), ncol=numparam, byrow=T)
-                fv <- sqrt(exp(log(fit1$residuals^2) - fit2$residuals))
-                adj.values <- pred + (pred.sd*fit1$residuals) / fv # correction heteroscedasticity
+                pred.si<-t(t(structure(cbind(fit2$coefficients)[fit2$qr$pivot,], names=names(fit2$coefficients))) %*%t(cbind(1,scaled.sumstat[wt1,])))
+                pred.si<-sqrt(exp(pred.si))
+               	#residuals2<-log(residuals^2)-t(t(structure(cbind(fit2$coefficients)[fit2$qr$pivot,], names=names(fit2$coefficients))) %*%t(cbind(1,scaled.sumstat[wt1,])))
+                #fv <- sqrt(exp(log(fit1$residuals^2) - fit2$residuals))
+                #fv <- sqrt(exp(residuals2))
+               # adj.values <- pred + (pred.sd*residuals) / fv # correction heteroscedasticity
+               adj.values <- pred + (pred.sd*residuals) / pred.si
+               residuals<-(pred.sd*residuals) / pred.si
             }
             else{
-                adj.values <- pred + fit1$residuals
+                adj.values <- pred + residuals
             }
             colnames(adj.values) <- colnames(unadj.values)
             lambda <- NULL
@@ -280,7 +276,7 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
             fv <- array(dim=c(sum(wt1), numparam, numnet))
             pred <- matrix(nrow=numparam, ncol=numnet)
             for (i in 1:numnet){
-                fit1 <- nnet(ss, unadj.values, weights = weights, decay = lambda[i],
+                fit1 <- nnet(scaled.sumstat[wt1,], param[wt1,], weights = weights, decay = lambda[i],
                              size = sizenet, trace = trace, linout = linout, maxit = maxit, ...)
                 cat(i)
                 fv[,,i] <- fit1$fitted.values
@@ -290,13 +286,13 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
             pred.med <- apply(pred, 1, median)
             pred.med <- matrix(pred.med, nrow=sum(wt1), ncol=numparam, byrow=T)
             fitted.values <- apply(fv, c(1,2), median)
-            residuals <- unadj.values - fitted.values # median of fitted values par nnets for each accepted point and parameter
+            residuals <- param[wt1,] - fitted.values # median of fitted values par nnets for each accepted point and parameter
             
             if(hcorr == TRUE){
                 pred2 <- matrix(nrow=numparam, ncol=numnet)
                 fv2 <- array(dim=c(sum(wt1), numparam, numnet))
                 for (i in 1:numnet){
-                    fit2 <- nnet(ss, log(residuals^2), weights = weights, decay = lambda[i], size = sizenet, trace = trace, linout = linout, ...)
+                    fit2 <- nnet(scaled.sumstat[wt1,], log(residuals^2), weights = weights, decay = lambda[i], size = sizenet, trace = trace, linout = linout, ...)
                     cat(i)
                     fv2[,,i] <- fit2$fitted.values
                     pred2[,i] <- predict(fit2, data.frame(rbind(target)))
@@ -306,7 +302,8 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
                 pred.sd <- matrix(pred.sd, nrow=sum(wt1), ncol=numparam, byrow=T)
                 fv.sd <- sqrt(exp(apply(fv2, c(1,2), median)))
                 adj.values <- pred.med + (pred.sd*residuals)/fv.sd # correction heteroscedasticity
-            }
+           		residuals<-(pred.sd*residuals)/fv.sd
+           }
             else{
                 adj.values <- pred.med + residuals
             }
@@ -319,6 +316,75 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
             }
             
         } # end of neuralnet
+             if(method == "ridge"){
+            #print("la")
+            ## normalise parameters
+            param.mad <- c()
+            for(i in 1:numparam){
+                param.mad[i] <- mad(param[,i][gwt]) # save for renormalisation
+                param[,i] <- normalise(param[,i],param[,i][gwt])
+            }
+           # print("ici")
+            numnet<-length(lambda)
+           #lambda <- sample(lambda, numnet, replace=T)
+            fv <- array(dim=c(sum(wt1), numparam, numnet))
+            pred <- matrix(nrow=numparam, ncol=numnet)
+            mataux<-sqrt(diag(weights))
+            paramaux<-as.matrix(mataux%*%param[wt1,])
+            
+            #print(dim(paramaux))
+            scaledaux<-mataux%*%scaled.sumstat[wt1,]
+            #targetaux<-drop(mataux%*%target
+            for(parcur in (1:numparam))
+            {
+            	#cat(parcur)
+            	fit1<-lm.ridge(paramaux[,parcur]~scaledaux,lambda=lambda)
+            	for (i in 1:numnet){
+            #   fit1 <- nnet(scaled.sumstat[wt1,], param[wt1,], weights = weights, decay = lambda[i],
+            #                 size = sizenet, trace = trace, linout = linout, maxit = maxit, ...)
+            #    cat(i)
+            	    fv[,parcur,i] <- drop(cbind(1,scaled.sumstat[wt1,])%*%(rbind(coef(fit1))[i,]))
+                	pred[parcur,i] <- drop(c(1, target) %*%(rbind(coef(fit1))[i,]))
+            					}
+            }
+           # cat("\n")
+            pred.med <- apply(pred, 1, median)
+            pred.med <- matrix(pred.med, nrow=sum(wt1), ncol=numparam, byrow=T)
+            fitted.values <- apply(fv, c(1,2), median)
+            residuals <- param[wt1,] - fitted.values # median of fitted values par nnets for each accepted point and parameter
+            
+            if(hcorr == TRUE){
+                pred2 <- matrix(nrow=numparam, ncol=numnet)
+                fv2 <- array(dim=c(sum(wt1), numparam, numnet))
+                 for(parcur in (1:numparam))
+            	{
+            		lresidaux<-(mataux%*%(log(residuals[,parcur]^2)))
+              		fit2<-lm.ridge(lresidaux~scaledaux,lambda=lambda)
+                	for (i in 1:numnet){
+                    	#cat(i)
+                    	fv2[,parcur,i] <- drop(cbind(1,scaled.sumstat[wt1,])%*%(rbind(coef(fit2))[i,]))
+						pred2[parcur,i] <- drop(c(1, target) %*%(rbind(coef(fit2))[i,]))         
+									}
+                }
+                cat("\n")
+                pred.sd <- sqrt(exp(apply(pred2, 1, median)))
+                pred.sd <- matrix(pred.sd, nrow=sum(wt1), ncol=numparam, byrow=T)
+                fv.sd <- sqrt(exp(apply(fv2, c(1,2), median)))
+                adj.values <- pred.med + (pred.sd*residuals)/fv.sd # correction heteroscedasticity
+            	residuals<- (pred.sd*residuals)/fv.sd
+            }
+            else{
+                adj.values <- pred.med + residuals
+            }
+            colnames(adj.values) <- colnames(unadj.values)
+            
+            ## renormalise
+            for(i in 1:numparam){
+                ##       residuals[,i] <- residuals[,i]*param.mad[i] not much sense...
+                adj.values[,i] <- adj.values[,i]*param.mad[i]
+            }
+            
+        } # end of ridge
         
     } # end of else than rejmethod
     
@@ -326,10 +392,9 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     ## ################################
     if(numparam == 1){
         unadj.values <- matrix(unadj.values, ncol=1)
-        if(!rejmethod){
-            adj.values <- matrix(adj.values, ncol=1)
-            residuals <- matrix(residuals, ncol=1)
-        }
+        if(method!="rejection")
+        {adj.values <- matrix(adj.values, ncol=1)
+        residuals <- matrix(residuals, ncol=1)}
     }
     
     for (i in 1:numparam){
@@ -346,12 +411,13 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     }
     
     abc.return(transf, logit.bounds, method, call, numparam, nss, paramnames, statnames,
-               unadj.values, adj.values, ss, weights, residuals, dist, wt1, gwt, lambda, hcorr)
+               unadj.values, adj.values, ss, weights, residuals, dist, wt1, gwt, lambda, hcorr,aic,bic)
     
 }
 
+
 abc.return <- function(transf, logit.bounds, method, call, numparam, nss, paramnames, statnames,
-                       unadj.values, adj.values, ss, weights, residuals, dist, wt1, gwt, lambda, hcorr){
+                       unadj.values, adj.values, ss, weights, residuals, dist, wt1, gwt, lambda, hcorr,aic,bic){
     
     if(method == "rejection"){
         out <- list(unadj.values=unadj.values, ss=ss, dist=dist,
@@ -362,7 +428,14 @@ abc.return <- function(transf, logit.bounds, method, call, numparam, nss, paramn
         out <- list(adj.values=adj.values, unadj.values=unadj.values,
                     ss=ss, weights=weights, residuals=residuals, dist=dist,
                     call=call, na.action=gwt, region=wt1, transf=transf, logit.bounds = logit.bounds,
-                    method="loclinear", hcorr = hcorr, numparam=numparam, numstat=nss,
+                    method="loclinear", hcorr = hcorr, numparam=numparam, numstat=nss,aic=aic,bic=bic,
+                    names=list(parameter.names=paramnames, statistics.names=statnames))
+    }
+    else if(method == "ridge"){
+        out <- list(adj.values=adj.values, unadj.values=unadj.values,
+                    ss=ss, weights=weights, residuals=residuals, dist=dist,
+                    call=call, na.action=gwt, region=wt1, transf=transf, logit.bounds = logit.bounds,
+                    method="ridge", hcorr = hcorr, numparam=numparam, numstat=nss,
                     names=list(parameter.names=paramnames, statistics.names=statnames))
     }
     else if(method == "neuralnet"){
@@ -385,37 +458,49 @@ is.abc <- function(x){
 
 print.abc <- function(x, ...){
     if (!inherits(x, "abc")) 
-      stop("Use only with objects of class \"abc\".", call.=F)
+        stop("Use only with objects of class \"abc\".", call.=F)
     abc.out <- x
-  cl <- abc.out$call
-  cat("Call:\n")
-  dput(cl, control=NULL)
-  cat("Method:\n")
-  if (abc.out$method == "rejection")
-    cat("Rejection\n\n")
-  else if (abc.out$method == "loclinear"){
-    if(abc.out$hcorr == T){
-      cat("Local linear regression\n")
-      cat("with correction for heteroscedasticity\n\n")
+    cl <- abc.out$call
+    cat("Call:\n")
+    dput(cl, control=NULL)
+    
+    cat("Method:\n")
+    ## rejection
+    if (abc.out$method == "rejection")
+        cat("Rejection\n\n")
+    ## loclinear
+    else if (abc.out$method == "loclinear"){
+        if(abc.out$hcorr == T){
+            cat("Local linear regression\n")
+            cat("with correction for heteroscedasticity\n\n")
+        }
+        else cat("Local linear regression\n\n")
     }
-    else cat("Local linear regression\n\n")
-  }
-  else if (abc.out$method == "neuralnet"){
-    if(abc.out$hcorr == T){
-      cat("Non-linear regression via neural networks\n")
-      cat("with correction for heteroscedasticity\n\n")
+    ## ridge
+    else if (abc.out$method == "ridge"){
+        if(abc.out$hcorr == T){
+            cat("Ridge regression\n")
+            cat("with correction for heteroscedasticity\n\n")
+        }
+        else cat("Ridge regression\n\n")
     }
-    else cat("Non-linear regression via neural networks\n\n")
-  }
-  cat("Parameters:\n")
-  cat(abc.out$names$parameter.names, sep=", ")
-  cat("\n\n")
-  cat("Statistics:\n")
-  cat(abc.out$names$statistics.names, sep=", ")
-  cat("\n\n")        
+    ## nnet
+    else if (abc.out$method == "neuralnet"){
+        if(abc.out$hcorr == T){
+            cat("Non-linear regression via neural networks\n")
+            cat("with correction for heteroscedasticity\n\n")
+        }
+        else cat("Non-linear regression via neural networks\n\n")
+    }
+    cat("Parameters:\n")
+    cat(abc.out$names$parameter.names, sep=", ")
+    cat("\n\n")
+    cat("Statistics:\n")
+    cat(abc.out$names$statistics.names, sep=", ")
+    cat("\n\n")        
     cat("Total number of simulations", length(abc.out$na.action), "\n\n")
-  cat("Number of accepted simulations: ", dim(abc.out$unadj.values)[1], "\n\n")
-  invisible(abc.out)
+    cat("Number of accepted simulations: ", dim(abc.out$unadj.values)[1], "\n\n")
+    invisible(abc.out)
 }
 
 summary.abc <- function(object, unadj = FALSE, intvl = .95, print = TRUE, digits = max(3, getOption("digits")-3), ...){
@@ -574,7 +659,7 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
   mymethod <- abc.out$method
 
   if(mymethod == "rejection")
-    stop("Diagnostic plots can be displayed only when method is \"loclinear\" or \"neuralnet\".", cal.=F)
+    stop("Diagnostic plots can be displayed only when method is \"loclinear\", \"neuralnet\" or \"ridge\".", cal.=F)
 
   if(!is.matrix(param) && !is.data.frame(param) && !is.vector(param)) stop("'param' has to be a matrix, data.frame or vector.", call.=F)
   if(is.null(dim(param))) param <- matrix(param, ncol=1)
@@ -773,7 +858,7 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
     lines(prior.d, col=cols[1], lty = ltys[1], lwd=lwds[1], ...)
     lines(rej.d, col = cols[3], lty = ltys[3], lwd=lwds[3], ...)
     if(!is.null(true)){
-      segments(x0 = true[i], x = true[i], y0 = myylim[1], y = myylim[2], col=cols[4], lty = ltys[4], lwd=lwds[4])
+      segments(x0 = true[i], x1 = true[i], y0 = myylim[1], y1 = myylim[2], col=cols[4], lty = ltys[4], lwd=lwds[4])
       mtext(text="True value", side = 1, line=2, at=true[i])
     }
       
@@ -793,7 +878,7 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
     points(param[myregion,i], alldist[myregion], col=cols[2], pch=mypch, ...)
     mypar <- par()
     if(!is.null(true)){
-      segments(x0 = true[i], x = true[i], y0 = myylim[1], y = myylim[2], col=cols[4], lty = ltys[4], lwd=lwds[4])
+      segments(x0 = true[i], x1 = true[i], y0 = myylim[1], y1 = myylim[2], col=cols[4], lty = ltys[4], lwd=lwds[4])
       mtext(text="True value", side = 1, line=2, at=true[i])
     }
   
@@ -802,6 +887,7 @@ plot.abc <- function(x, param, subsample = 1000, true = NULL,
 
     if(mymethod=="loclinear") mymain <- "Residuals from lsfit()"
     if(mymethod=="neuralnet") mymain <- "Residuals from nnet()"
+    if(mymethod=="ridge") mymain <- "Residuals from lm.ridge()"
     qqnorm(residuals, pch=mypch, main=mymain, sub="Normal Q-Q plot", xlab="Theoretical quantiles", ylab="Residuals",...)
     qqline(residuals)
     
