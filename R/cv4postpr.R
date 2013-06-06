@@ -21,7 +21,6 @@
 # Contains: cv4postpr, is.cv4postpr, summary.cv4postpr, plot.cv4postpr 
 #
 ######################################################################
-
 ## cross-validation for model selection
 cv4postpr <- function(index, sumstat, postpr.out = NULL, nval, tols,
                       method, subset = NULL, kernel = "epanechnikov",
@@ -96,7 +95,7 @@ cv4postpr <- function(index, sumstat, postpr.out = NULL, nval, tols,
   if(is.null(subset)) subset <- rep(TRUE,length(sumstat[,1]))
   gwt <- as.logical(gwt*subset)
   ## CV samples
-  cvsamp <- unlist(tapply(c(1:length(index))[gwt], index, sample, nval))
+  cvsamp <- unlist(tapply(c(1:length(index))[gwt], index[gwt], sample, nval))
 
   ## if tols is a vector have to loop through all values
   tols <- sort(tols)
@@ -112,8 +111,8 @@ cv4postpr <- function(index, sumstat, postpr.out = NULL, nval, tols,
         myindex <- index[-mysamp]
         mysumstat <- sumstat[-mysamp,]
         mysubset <- subset[-mysamp]
-        subres <- withCallingHandlers( postpr(target = mytarget, index = myindex, sumstat = mysumstat, tol=mytol,
-                         subset = mysubset, method = method, kernel = kernel), warning = namesWarningFilter)
+        subres <- postpr(target = mytarget, index = myindex, sumstat = mysumstat, tol=mytol,subset = mysubset, method = method, kernel = kernel)
+
         if(subres$method=="rejection") res[i,] <- summary.postpr(subres, print = F, ...)$Prob
         if(subres$method=="mnlogistic") res[i, ] <- summary.postpr(subres, print = F, ...)$mnlogistic$Prob
         if(subres$method=="neuralnet") res[i, ] <- summary.postpr(subres, print = F, ...)$neuralnet$Prob
@@ -225,3 +224,6 @@ plot.cv4postpr <- function(x, probs=FALSE, file = NULL, postscript = FALSE, onef
   invisible()
   
 }
+
+
+

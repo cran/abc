@@ -1,6 +1,6 @@
 Package: abc
-Version: 1.6
-Date: 2012-16-02
+Version: 1.7
+Date: 2013-06-06
 Title: Tools for Approximate Bayesian Computation (ABC)
 Author: Katalin Csillery, Michael Blum and Olivier Francois
 Maintainer: Michael Blum <michael.blum@imag.fr>
@@ -12,5 +12,6 @@ Description: The package implements several ABC algorithms for
         misclassification probabilities of different models.
 Repository: CRAN
 License: GPL (>= 3)
-Packaged: 2012-08-14 15:10:43 UTC; mblum
-Date/Publication: 2012-08-14 16:27:09
+Packaged: 2013-06-06 15:45:28 UTC; mblum
+Date/Publication: 2013-06-06 19:53:42
+NeedsCompilation: no

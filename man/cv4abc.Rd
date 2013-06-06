@@ -136,8 +136,8 @@ data(musigma2)
 ## cv4abc() calls abc(). Here we show two ways for the supplying
 ## arguments of abc(). 1st way: passing arguments directly. In this
 ## example only 'param', 'sumstat', 'tol', and 'method', while default
-## values are used for the other arguments.The number of evaluation should be much more greater in realistic settings
-##
+## values are used for the other arguments.
+## Number of eval. should be much more greater in realistic settings
 cv.rej <- cv4abc(param=par.sim, sumstat=stat.sim, nval=5,
 tols=c(.1,.2,.3), method="rejection")
 

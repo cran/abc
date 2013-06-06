@@ -1,3 +1,16 @@
+Changes in abc 1.7
+============================
+
+---------
+  o In the getmode function of the abc.R file
+  		d$x[which(d$y == max(d$y))] replaced by  d$x[which(d$y == max(d$y))][1]
+  o In the cv4postpr function
+  	The line
+  	 subres <- withCallingHandlers( postpr(target = mytarget, index = myindex, sumstat = mysumstat, tol=mytol,
+                         subset = mysubset, method = method, kernel = kernel), warning = namesWarningFilter)
+    has been changed and there is no call to withCallingHandlers anymore
+
+
 Changes in abc 1.6
 ============================
 
@@ -6,6 +19,8 @@ Changes in abc 1.6
   		ss<-data.frame(ss)
         colnames(ss)<-statnames 
         in postpr so that mnlogistic and neural net work when there is only one sum stat
+  o Michael Blum is the unique maintainer conforming to the new CRAN policy
+
   o Michael Blum is the unique maintainer conforming to the new CRAN policy
 
 

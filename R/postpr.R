@@ -327,3 +327,5 @@ summary.postpr <- function(object, rejection = TRUE, print = TRUE, digits = max(
   invisible(out)
 }
   
+
+

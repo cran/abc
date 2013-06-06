@@ -248,11 +248,6 @@ FALSE, method = "loclinear", transf=c("none","log"))
 linhc <- abc(target=stat.obs, param=par.sim, sumstat=stat.sim, tol=.1, method =
 "loclinear", transf=c("none","log")) 
 
-## ABC with neural networks with correction for heteroscedasticity
-##
-net <- abc(target=stat.obs, param=par.sim, sumstat=stat.sim,
-tol=.2, method="neuralnet", transf=c("none","log")) 
-
 ## posterior summaries
 ##
 linsum <- summary(linhc, intvl = .9)
@@ -269,19 +264,17 @@ expression(sigma^2)))
 hist(linhc, file="linhc", breaks=30, caption=c(expression(mu),
 expression(sigma^2)))
 
-## diagnostic plots: compare the 3 'abc' objects: "loclinear",
-## "loclinear" with correction for heteroscedasticity, and "neuralnet"
-## with correction for heteroscedasticity
+## diagnostic plots: compare the 2 'abc' objects: "loclinear",
+## "loclinear" with correction for heteroscedasticity
 ##
 plot(lin, param=par.sim)
 plot(linhc, param=par.sim)
-plot(net, param=par.sim)
 
 ## example illustrates how to add "true" parameter values to a plot
 ##
 postmod <- c(post.mu[match(max(post.mu[,2]), post.mu[,2]),1],
              post.sigma2[match(max(post.sigma2[,2]), post.sigma2[,2]),1])
-plot(net, param=par.sim, true=postmod)
+plot(linhc, param=par.sim, true=postmod)
 
 
 ## artificial example to show how to use the logit tranformations

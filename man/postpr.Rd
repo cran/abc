@@ -145,18 +145,21 @@ boxplot(stat.3pops.sim[,"pi"]~models, main="Mean nucleotide diversity")
 boxplot(stat.3pops.sim[,"TajD.m"]~models, main="Mean Tajima's D")
 boxplot(stat.3pops.sim[,"TajD.v"]~models, main="Var in Tajima's D")
 
-## model selection with ABC for the three populations, representing
-## three continents
+## model selection with ABC for the European population
 
-modsel.ha <- postpr(stat.voight["hausa",], models, stat.3pops.sim, tol=.05, method="mnlogistic")
+
 modsel.it <- postpr(stat.voight["italian",], models, stat.3pops.sim, tol=.05, method="mnlogistic")
-modsel.ch <- postpr(stat.voight["chinese",], models, stat.3pops.sim, tol=.05, method="mnlogistic")
-summary(modsel.ha)
 summary(modsel.it)
-summary(modsel.ch)
 
-## in Africa, population expansion is the most supported model, while in
-## Europe and Asia the population bottleneck
+## In Europe, the most supported model
+## is a population bottleneck 
+## Check that in Africa, population expansion is the most supported model, while in
+##  Asia, it is a population bottleneck
+##modsel.ha <- postpr(stat.voight["hausa",], models, stat.3pops.sim, 
+##tol=.05, method="mnlogistic")
+##modsel.ch <- postpr(stat.voight["chinese",], models, stat.3pops.sim,
+## tol=.05, method="mnlogistic")
+
 
 }
 \keyword{htest}

@@ -567,7 +567,7 @@ getmode <- function(x, weights = NULL, ...){
 
   ##  if(missing(bw) | missing(kernel) | missing(window) | missing(n)) warning("density.default() was used to calculate the posterior mode")
   d <- density(x, weights = weights)
-  d$x[which(d$y == max(d$y))]
+  d$x[which(d$y == max(d$y))][1] 
 }
 
 
