@@ -25,9 +25,9 @@ getOption("digits")-3), \dots)
 }
 \details{
   The prediction error is calculated as
-  \eqn{\frac{\sum((\theta^{*}-\theta)^2)}{Var(\theta^{*})}}, where
-  \eqn{\theta} is the true parameter value and \eqn{\theta^{*}} is the
-  estimated parameter value.    
+  \eqn{\frac{\sum((\theta^{*}-\theta)^2)}{nval\times Var(\theta)}}, where
+  \eqn{\theta} is the true parameter value, \eqn{\theta^{*}} is the
+  predicted parameter value, and \eqn{nval} is the number of points where true and predicted values are compared.
 }
 \value{  
   The returned value is an object of class \code{"table"}, where the

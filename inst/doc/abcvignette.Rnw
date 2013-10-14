@@ -18,7 +18,7 @@
 % ---------------------------------------------------------------------------------------------------------------------------------------
 
 % \VignetteIndexEntry{ABC}
-%\VignetteDepends{quantreg,nnet,locfit}
+%\VignetteDepends{quantreg,nnet}
 %\VignettePackage{abc}
 %\documentclass{amsart}
 \newcommand{\code}[1]{{\texttt{#1}}}

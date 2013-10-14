@@ -147,15 +147,15 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
     dist[!gwt] <- floor(max(dist[gwt])+10)
     
     ## wt1 defines the region we're interested in
-    #ds <- quantile(dist,tol)
-    if(kernel == "gaussian") wt1 <- rep(TRUE, length(dist)) ## ???????????????????????????
-    else 
+
+    ceiling(length(dist)*tol)->nacc
+    sort(dist)[nacc]->ds
+    wt1 <- (dist <= ds)
+    aux<-cumsum(wt1)
+    wt1 <- wt1 & (aux<=nacc)
+    if(kernel == "gaussian") 
     {
-    	ceiling(length(dist)*tol)->nacc
-    	sort(dist)[nacc]->ds
-    	wt1 <- (dist <= ds)
-    	aux<-cumsum(wt1)
-    	wt1 <- wt1 & (aux<=nacc)
+    	wt1 <- rep(TRUE, length(dist))
     }
     ## transform parameters
     ## ######################
@@ -212,7 +212,7 @@ abc <- function(target, param, sumstat, tol, method, hcorr = TRUE,
         ## weights
         if(kernel == "epanechnikov") weights <- 1 - (dist[wt1]/ds)^2
         if(kernel == "rectangular") weights <- dist[wt1]/ds
-        if(kernel == "gaussian") weights <- 1/sqrt(2*pi)*exp(-0.5*(dist/ds)^2)
+        if(kernel == "gaussian") weights <- 1/sqrt(2*pi)*exp(-0.5*(dist/(ds/2))^2)
         if(kernel == "triangular") weights <- 1 - abs(dist[wt1]/ds)
         if(kernel == "biweight") weights <- (1 - (dist[wt1]/ds)^2)^2
         if(kernel == "cosine") weights <- cos(pi/2*dist[wt1]/ds)

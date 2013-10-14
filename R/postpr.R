@@ -25,7 +25,6 @@
 postpr <- function(target, index, sumstat, tol, subset=NULL, method, corr=TRUE, kernel="epanechnikov",
                    numnet = 10, sizenet = 5, lambda = c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...){
 
-  require(nnet)
   linout <- FALSE
   call <- match.call()
 

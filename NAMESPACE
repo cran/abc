@@ -1,6 +1,9 @@
 export(abc, cv4abc, postpr, cv4postpr, expected.deviance)
 importFrom(graphics, plot, points)
 importFrom(nnet, nnet, multinom)
+importFrom(MASS,lm.ridge)
+importFrom(quantreg,rq)
+
 
 # abc S3methods
 S3method(print, abc)

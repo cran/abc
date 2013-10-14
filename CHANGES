@@ -1,3 +1,16 @@
+Changes in abc 1.8
+============================
+
+---------
+  o The problem in the abc function that arises when using kernel="gaussian" is fixed
+  o Checking dependencies in R code ... NOTE
+  ‘library’ or ‘require’ call to ‘nnet’ which was already attached by Depends.
+  Please remove these calls from your code. 
+	require(nnet) removed from postpr.R
+  o Changes in the details of the summary.cv4abc.Rd function
+  o Compression of the data with the resaveRdaFiles function  (package tools ) 
+  	
+	
 Changes in abc 1.7
 ============================
 
