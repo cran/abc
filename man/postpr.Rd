@@ -129,7 +129,7 @@ c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
 }
 \examples{
 
-## an arifical example
+## an artifical example
 ss <- cbind(runif(1000),rt(1000,df=20))
 postpr(target=c(3), index=c(rep("norm",500),rep("t",500)),
 sumstat=ss[,1], tol=.1, method="rejection")

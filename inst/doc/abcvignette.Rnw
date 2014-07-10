@@ -41,7 +41,7 @@
 % %@% TO ELIMINATE THE "+" IN CONSECUTIVE SCRIPT LINES
 
 \title{Approximate Bayesian Computation (ABC) in R: A Vignette}
-\author{K Csill\'ery, O Fran\c cois, MGB Blum}
+\author{K Csill\'ery, L Lemaire, O Fran\c cois, MGB Blum}
 \date{\pkg{abc} version \Sexpr{packageDescription("abc")[["Version"]]} , \Sexpr{Sys.Date()} }
 \maketitle
 
@@ -287,6 +287,21 @@ elements of the matrix do not give model counts, but the average
 posterior probabilities across simulations for a given model.
 
 
+\subsection{Goodness-of-fit}
+
+A formal hypothesis testing procedure for goodness-of-fit is available since the version 2.0 of
+the package \pkg{abc}. The test statistic is the median of the distance between accepted summary
+statistics and observed ones. Instead of the mean, other choices are possible including mean or maximum values.
+To obtain the null distribution of the test statistic, we consider a given number of pseudo-observed summary statistics
+as in the cross-validation experiments. Ideally, simulations should be performed with the posterior distributions
+but it is more convenient to use the prior distribution because it does not require an additional use of the
+simulation software.
+
+In addition to the hypothesis-testing procedure, we provide a graphical method to check the Goodness-of-fit.
+Our advocated approach is based on Principal Component Analysis, which is useful for graphical display when there are many
+summary statistics.
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -516,16 +531,76 @@ These results show that Hausa data supports best the model of
 exponential growth model, while the Italian and Chinoise data supports
 best the population bottleneck model.
 
-Now we can move to our original objective, which is to estimate the
-ancestral population size. To do so, in the following sections we will
-focus on only one of the population data. We choose the data set from
-Italy, for which we will estimate the ancestral population size under
-the (most supported) bottleneck model.
+In the following, we only focus on the data set from
+Italy.
+
+
+\subsection{Goodness-of-fit}
+
+
+Before turning to parameter inference, it is important to check that the preferred
+model provides a good fit to the data.
+
+For the Italian data, we can plot the histogram of the null distribution under a bottleneck model on which we superimpose
+the observed value (Figure \ref{fig:distance}).
+
+<<label=distanceplot>>=
+res.gfit.bott=gfit(target=stat.voight["italian",], sumstat=stat.3pops.sim[models=="bott",],
+statistic=mean, nb.replicate=100)
+plot(res.gfit.bott, main="Histogram under H0")
+@
+
+\setkeys{Gin}{width=4in, height=4in}
+\begin{figure} 
+  \begin{center} 
+<<label=distance,fig=TRUE,echo=FALSE>>= 
+<<distanceplot>> 
+@ 
+\end{center} 
+\caption{Histogram of the null distribution of the test statistic for goodness of fit assuming a bottleneck model.}
+\label{fig:distance}
+\end{figure}
+
+We can compute a P-value to test the fit to the bottleneck model.
+We can additionally check that the other demographic models do not provide a good fit to the Italian data, which 
+would confirm the results obtained with model selection.
+
+<<>>=
+res.gfit.exp=gfit(target=stat.voight["italian",], sumstat=stat.3pops.sim[models=="exp",],
+statistic=mean, nb.replicate=100)
+res.gfit.const=gfit(target=stat.voight["italian",], sumstat=stat.3pops.sim[models=="const",],
+statistic=mean, nb.replicate=100)
+summary(res.gfit.bott)
+summary(res.gfit.exp)
+summary(res.gfit.const)
+@
+
+Alternative graphical procedures are also possible to perform Goodness-of-fit. We can perform Principal
+Component Analysis (PCA) with 2 components to make new summary statistics. We can then display the $90\%$ (or something else
+equal to 1-\code{cprob}) enveloppe of the 2 PCs obtained with each demographic model (Figure \ref{fig:pca}).
+Simulations are performed a priori to avoid additional use of the
+simulation software but similar procedures can be used with posterior simulations. 
+
+
+<<label=pcaplot>>=
+gfitpca(target=stat.voight["italian",], sumstat=stat.3pops.sim, index=models, cprob=.1)
+@
+
+\setkeys{Gin}{width=4in, height=4in}
+\begin{figure} 
+  \begin{center} 
+<<label=pca,fig=TRUE,echo=FALSE>>= 
+<<pcaplot>> 
+@ 
+\end{center} 
+\caption{$90\%$ enveloppe of the 2 Principal Components obtained with each demographic model.}
+\label{fig:pca}
+\end{figure}
 
 \subsection{Posterior predictive checks}
 
 To further confirm that the bottleneck model provided the best fit to
-the Italian data, we considered posterior predictive checks
+the Italian data, we can also consider posterior predictive checks
 \cite{gelmanetal03}. Note that there is no specific function in
 \pkg{abc} for posterior predictive checks, nevertheless the task can
 be easily carried out. First, we estimate the posterior distributions
@@ -581,6 +656,9 @@ predictive checks than for parameter estimation. Nevertheless, this
 could be difficult in many applications, since we already used our
 ``best'' summary statistics for inference.
 
+Now we can move to our original objective, which is to estimate the
+ancestral population size.
+
 \subsection{Cross-validation}
 
 Now, we are almost ready to infer the ancestral population size under
@@ -616,8 +694,10 @@ with a smaller value of \code{nval} to compare different tolerance
 rates, and also different estimation methods.
 
 <<>>=
-cv.res.rej <- cv4abc(data.frame(Na=par.italy.sim[,"Ne"]), stat.italy.sim, nval=10, tols=c(.005,.01, 0.05), method="rejection")
-cv.res.reg <- cv4abc(data.frame(Na=par.italy.sim[,"Ne"]), stat.italy.sim, nval=10, tols=c(.005,.01, 0.05), method="loclinear")
+cv.res.rej <- cv4abc(data.frame(Na=par.italy.sim[,"Ne"]), stat.italy.sim, nval=10,
+tols=c(.005,.01, 0.05), method="rejection")
+cv.res.reg <- cv4abc(data.frame(Na=par.italy.sim[,"Ne"]), stat.italy.sim, nval=10,
+tols=c(.005,.01, 0.05), method="loclinear")
 summary(cv.res.rej)
 summary(cv.res.reg)
 @ 
@@ -667,7 +747,8 @@ use a \verb|"log"| transformation of the parameter. The correction for
 heteroscedasticity of performed by default.
 
 <<>>=
-res <- abc(target=stat.voight["italian",], param=data.frame(Na=par.italy.sim[, "Ne"]), sumstat=stat.italy.sim, tol=0.05, transf=c("log"), method="neuralnet")
+res <- abc(target=stat.voight["italian",], param=data.frame(Na=par.italy.sim[, "Ne"]),
+sumstat=stat.italy.sim, tol=0.05, transf=c("log"), method="neuralnet")
 res
 @
 
@@ -746,6 +827,7 @@ $N_a$. The lower right panel displays a standard Q-Q plot of the
 residuals of the regression, $\hat{\epsilon_i}$. This plot serves as a
 regression diagnostic of the linear or non-linear regression when the method
 is \verb|"loclinear"| or \verb|"neuralnet"|.
+
 
 \section{Conclusions}
 

@@ -1,3 +1,10 @@
+Changes in abc 2.0
+============================
+
+---------
+  o Include goodness-of-fit functions (gfit, plot.gfit, summary.gfit, is.gfit and gfitpca)
+  
+
 Changes in abc 1.8
 ============================
 

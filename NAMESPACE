@@ -1,9 +1,9 @@
-export(abc, cv4abc, postpr, cv4postpr, expected.deviance)
+export(abc, cv4abc, postpr, cv4postpr, expected.deviance, gfit, gfitpca)
 importFrom(graphics, plot, points)
 importFrom(nnet, nnet, multinom)
 importFrom(MASS,lm.ridge)
 importFrom(quantreg,rq)
-
+importFrom(locfit,locfit)
 
 # abc S3methods
 S3method(print, abc)
@@ -22,3 +22,6 @@ S3method(summary, postpr)
 S3method(plot, cv4postpr)
 S3method(summary, cv4postpr)
 
+#gfit S3methods
+S3method(plot, gfit)
+S3method(summary, gfit) 
