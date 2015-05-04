@@ -121,8 +121,7 @@ c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
 }
 \author{
   Katalin Csillery, Olivier Francois and Michael Blum with some
-  initial code from Mark Beaumont
-  (\url{http://www.rubic.rdg.ac.uk/~mab/}).
+  initial code from Mark Beaumont.
 }
 \seealso{
   \code{\link{summary.postpr}}
@@ -135,6 +134,7 @@ postpr(target=c(3), index=c(rep("norm",500),rep("t",500)),
 sumstat=ss[,1], tol=.1, method="rejection")
 
 ## human demographic history
+require(abc.data)
 data(human)
 ## five R objects are loaded. See ?human and vignette("abc") for details.
 

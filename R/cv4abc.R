@@ -129,7 +129,7 @@ cv4abc <- function(param, sumstat, abc.out = NULL, nval, tols,
             mysumstat <- sumstat[-mysamp,]
             mysubset <- subset[-mysamp]
             subres <- withCallingHandlers( abc(target = mytarget, param = myparam, sumstat = mysumstat, tol=mytol,
-                          subset = mysubset, method = method, transf = transf, logit.bounds = logit.bounds, kernel = kernel), warning = namesWarningFilter)
+                          subset = mysubset, method = method, transf = transf, logit.bounds = logit.bounds, kernel = kernel,hcorr = hcorr), warning = namesWarningFilter)
             if(statistic == "median") estim <- invisible(summary.abc(subres, print = F, ...)[3, ])
             if(statistic == "mean") estim <- invisible(summary.abc(subres, print = F, ...)[4, ])
             if(statistic == "mode") estim <- invisible(summary.abc(subres, print = F, ...)[5, ])
@@ -140,7 +140,7 @@ cv4abc <- function(param, sumstat, abc.out = NULL, nval, tols,
         alltol[[paste("tol", mytol, sep="")]] <- res
         mycall[[paste("tol", mytol, sep="")]] <- call("abc", target = quote(target), param = quote(param), sumstat = quote(sumstat),
                                                       tol= mytol,
-                                                      subset = quote(subset), method = subres$method, transf = subres$transf,
+                                                      subset = quote(subset), method = subres$method, hcorr = subres$hcorr,transf = subres$transf,
                                                       logit.bounds = subres$logit.bounds, kernel = subres$kernel)
     }
     if(np==1){

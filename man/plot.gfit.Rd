@@ -35,4 +35,3 @@
  ## see ?gfit for examples
 }
 
-

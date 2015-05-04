@@ -129,6 +129,7 @@ prior.range = NULL, method, hcorr = TRUE, transf = "none", logit.bounds
   \code{\link{abc}}, \code{\link{plot.cv4abc}}, \code{\link{summary.cv4abc}}
 }
 \examples{
+require(abc.data)
 data(musigma2)
 ## this data set contains five R objects, see ?musigma2 for
 ## details 

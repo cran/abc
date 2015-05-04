@@ -113,6 +113,7 @@ subset = NULL, kernel = "epanechnikov", numnet = 10, sizenet = 5, lambda
   \code{\link{postpr}}, \code{\link{summary.cv4postpr}}, \code{\link{plot.cv4postpr}}
 }
 \examples{
+require(abc.data)
 data(human)
 ###Reduce the sample size of the simulations to reduce the running time.
 ###Do not do that with your own data!

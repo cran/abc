@@ -49,6 +49,7 @@ gfitpca(target, sumstat, index, cprob=0.1, xlim=NULL, ylim=NULL, ...)
 }
 \examples{
 ## human demographic history
+require(abc.data)
 data(human)
 ## five R objects are loaded. See ?human and vignette("abc") for details.
 

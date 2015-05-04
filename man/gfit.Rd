@@ -63,6 +63,7 @@ trace=FALSE)
 }
 \examples{
 ## human demographic history
+require(abc.data)
 data(human)
 
 ##  Perform a test of goodness-of-fit.

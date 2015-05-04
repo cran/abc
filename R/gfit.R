@@ -93,7 +93,7 @@ plot.gfit=function(x, breaks="Freedman-Diaconis", main="Histogramme of the null 
     
     hist(dist.sim, prob=T, xlab="Distance", xlim=c(inf, sup), breaks=breaks, main=main, ...)
     abline(v=dist.obs, col=4, pch=5, lwd=2)
-    legend("topright", legend="Observed statistic", cex=0.8, col=4, lty=1, lwd=2)
+    legend("topright", legend="Observed distance", cex=0.8, col=4, lty=1, lwd=2)
 }
 
 

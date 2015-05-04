@@ -223,8 +223,7 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
 }
 \author{
   Katalin Csillery, Olivier Francois and Michael Blum with some
-  initial code from Mark Beaumont
-  (\url{http://www.rubic.rdg.ac.uk/~mab/}).
+  initial code from Mark Beaumont.
 }
 \seealso{
   \code{\link{summary.abc}}, \code{\link{hist.abc}},
@@ -232,6 +231,7 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
   \code{\link{cv4abc}}
 }
 \examples{
+require(abc.data)
 data(musigma2)
 ?musigma2
 

@@ -60,17 +60,18 @@ rm(list=ls())
 \section{Summary}
 
 An implementation of Approximate Bayesian Computation (ABC) methods in
-the \R language is available in the package \pkg{abc}.  The aim of
-this vignette is to provide an extended overview of the capabilities
-of the package, with a detailed example of the analysis of real
-data. Some general information on installation procedures and object
-oriented programming in \R are given in Section
-\emph{Introduction}. The ABC methodology is briefly illustrated in
-Section \emph{A brief introduction to ABC}. A detailed example of an
-ABC analysis, where we aim to estimate the ancestral human population
-size is provided in Section \emph{A walk-though example: human
-  demographic history}. Users already familiar with the \R and ABC
-methods may skip the first two Sections and start with the example.
+the \R language is available in the package \pkg{abc} with associated
+example data sets in the \pkg{abc.data} package.  The aim of this
+vignette is to provide an extended overview of the capabilities of the
+package, with a detailed example of the analysis of real data. Some
+general information on installation procedures and object oriented
+programming in \R are given in Section \emph{Introduction}. The ABC
+methodology is briefly illustrated in Section \emph{A brief
+  introduction to ABC}. A detailed example of an ABC analysis, where
+we aim to estimate the ancestral human population size is provided in
+Section \emph{A walk-though example: human demographic history}. Users
+already familiar with the \R and ABC methods may skip the first two
+Sections and start with the example.
 
 \section{Introduction}
 
@@ -81,19 +82,21 @@ the CRAN website. There are already several resources for an
 introduction to \R.  The CRAN website link to contributed
 documentation also offers excellent introductions in several
 languages. Once \R is running the installation of additional packages
-is quite straightforward.  To install the \pkg{abc} package from \R
+is quite straightforward.  To install the \pkg{abc} and \pkg{abc.data} packages from \R
 simply type:
 
 \vspace{2mm}
 \noindent
 \texttt{> install.packages("abc")}
+\texttt{> install.packages("abc.data")}
 
 \vspace{2mm}
 \noindent
-Once the \texttt{abc} package is installed, it needs to be made
-accessible to the current \R session by the command:
+Once the packages are installed, thely need to be made
+accessible to the current \R session by the commands:
 <<results = hide>>=
 library(abc)
+require(abc.data)
 @
 
 For online help facilities or the details of a particular command
@@ -357,6 +360,7 @@ following code:
 
 <<>>=
 library(abc)
+require(abc.data)
 data(musigma2)
 @
 
@@ -392,6 +396,7 @@ observed summary statistics (our data!) can be accessed with the
 following code:
 
 <<>>=
+require(abc.data)
 data(human)
 stat.voight
 @
@@ -617,6 +622,7 @@ The results of the posterior predictive checks could best be dispayed
 as histograms:
 \setkeys{Gin}{width=5in, height=5in}
 <<label=ppcplot, include=FALSE>>=
+require(abc.data)
 data(ppc)
 mylabels <- c("Mean nucleotide diversity","Mean Tajima's D", "Var Tajima's D")
 par(mfrow = c(1,3), mar=c(5,2,4,0))

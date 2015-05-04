@@ -4,6 +4,7 @@ importFrom(nnet, nnet, multinom)
 importFrom(MASS,lm.ridge)
 importFrom(quantreg,rq)
 importFrom(locfit,locfit)
+import(abc.data)
 
 # abc S3methods
 S3method(print, abc)
