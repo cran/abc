@@ -111,7 +111,7 @@ cv4postpr <- function(index, sumstat, postpr.out = NULL, nval, tols,
         myindex <- index[-mysamp]
         mysumstat <- sumstat[-mysamp,]
         mysubset <- subset[-mysamp]
-        subres <- postpr(target = mytarget, index = myindex, sumstat = mysumstat, tol=mytol,subset = mysubset, method = method, kernel = kernel)
+        subres <- postpr(target = mytarget, index = myindex, sumstat = mysumstat, tol=mytol,subset = mysubset, method = method, kernel = kernel,...)
 
         if(subres$method=="rejection") res[i,] <- summary.postpr(subres, print = F, ...)$Prob
         if(subres$method=="mnlogistic") res[i, ] <- summary.postpr(subres, print = F, ...)$mnlogistic$Prob

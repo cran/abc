@@ -1,3 +1,14 @@
+Changes in abc 2.2.1
+============================
+---------
+  o Remove the file build/vignette.rds
+  o Do not run some examples in Rd file to avoid generating files
+
+Changes in abc 2.2
+============================
+---------
+  o Remove a bug in the hist function when unadj=TRUE
+
 Changes in abc 2.1
 ============================
 
@@ -6,6 +17,13 @@ Changes in abc 2.1
   o Remove the line 
    desc <- packageDescription("GWRM")
    in the CITATION file
+  o Thanks to the work of Louisiane Lemaire, two new functions, gfit
+  and gfitpca, were added to the package along with a plot and summary
+  S3 method for gfit to perform a goodness of fit. gfit tests if the
+  model preferred with postpr provides a good fit to the data
+  o A separate data package (abc.data) was developped to store the
+  package's three data sets
+
   
 Changes in abc 2.0
 ============================
@@ -63,15 +81,3 @@ Changes in abc 1.5
   o Add the AIC and BIC computation in the abc function.
   They are used to select a subset of informative statistics.
   It is the AIC/BIC of the local linear regression that is returned.
-
-Changes in abc 2.1
-============================
-
---------- 
-  o Thanks to the work of Louisiane Lemaire, two new functions, gfit
-  and gfitpca, were added to the package along with a plot and summary
-  S3 method for gfit to perform a goodness of fit. gfit tests if the
-  model preferred with postpr provides a good fit to the data
-
-  o A separate data package (abc.data) was developped to store the
-  package's three data sets

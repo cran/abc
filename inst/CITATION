@@ -10,5 +10,5 @@ citEntry(entry="Article",
                              as.person("Michael G. B. Blum")),
          year = 2012,
          journal = "Methods in Ecology and Evolution",
-         DOI = "http://dx.doi.org/10.1111/j.2041-210X.2011.00179.x",
+         DOI = "10.1111/j.2041-210X.2011.00179.x",
 	 textVersion = "Csillery, K., Francois, O. and Blum, M. G. B. (2012), abc: an R package for approximate Bayesian computation (ABC). Methods in Ecology and Evolution 3: 475-479. doi: 10.1111/j.2041-210X.2011.00179.x")

@@ -599,8 +599,7 @@ hist.abc <- function(x, unadj = FALSE, true = NULL,
 
   if(abc.out$method == "rejection") res <- abc.out$unadj.values
   else if (unadj){
-    rej <- abc.out$unadj.values
-    res <- abc.out$adj.values
+    res <- abc.out$unadj.values
   }
   else res <- abc.out$adj.values
 

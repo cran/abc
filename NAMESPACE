@@ -4,8 +4,16 @@ importFrom(nnet, nnet, multinom)
 importFrom(MASS,lm.ridge)
 importFrom(quantreg,rq)
 importFrom(locfit,locfit)
+importFrom("grDevices", "as.graphicsAnnot", "dev.off", "devAskNewPage",
+     "deviceIsInteractive", "heat.colors", "pdf")
+importFrom("graphics", "abline", "barplot", "hist", "legend", "lines",
+     "mtext", "par", "segments", "title")
+importFrom("stats", "as.formula", "coef", "density", "fitted", "lsfit",
+     "mad", "median", "na.omit", "prcomp", "predict", "qqline",
+     "qqnorm", "quantile", "runif", "var", "weighted.mean")
+     
 import(abc.data)
-
+  
 # abc S3methods
 S3method(print, abc)
 S3method(summary, abc) 

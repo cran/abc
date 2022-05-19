@@ -162,8 +162,10 @@ expression(sigma^2)))
 plot(cv.rej, log=c("", "xy"), caption=c(expression(mu), expression(sigma^2)))
 
 ## or printing results directly to a postscript file...
+\dontrun{
 plot(cv.lin, log=c("xy", "xy"), caption=c(expression(mu),
 expression(sigma^2)), file="CVrej", postscript=TRUE)
+}
 
 ## using the summary method to calculate the prediction error
 summary(cv.lin)

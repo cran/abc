@@ -261,9 +261,10 @@ hist(linhc, breaks=30, caption=c(expression(mu),
 expression(sigma^2))) 
 
 ## or send histograms to a pdf file
+\dontrun{
 hist(linhc, file="linhc", breaks=30, caption=c(expression(mu),
 expression(sigma^2)))
-
+}
 ## diagnostic plots: compare the 2 'abc' objects: "loclinear",
 ## "loclinear" with correction for heteroscedasticity
 ##
