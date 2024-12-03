@@ -67,7 +67,7 @@ postscript = FALSE, onefile = TRUE, ask =
   corresponding to the accepted simulations are displayed in red. (iv) A
   Normal Q-Q plot of the residuals from the regression, thus from
   \code{\link{lsfit}} when method was \code{"loclinear"}, and from
-  \code{\link{nnet}} when method was \code{"neuralnet"} in the original
+  \code{\link[nnet]{nnet}} when method was \code{"neuralnet"} in the original
   \code{\link{abc}}.
 
   For plots (i) and (iii) not the whole data but a subsample is used,

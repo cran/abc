@@ -1,3 +1,10 @@
+Changes in abc 2.2.2
+============================
+---------
+  o Update CITATION file to use modern bibentry format
+  o Reduce PDF vignette file size
+  o Fix Rd cross-references by adding package anchors
+
 Changes in abc 2.2.1
 ============================
 ---------

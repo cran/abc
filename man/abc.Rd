@@ -58,26 +58,26 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
   \item{numnet}{
     the number of neural networks when \code{method} is
     \code{"neuralnet"}. Defaults to 10. It indicates the number of times
-    the function \code{\link{nnet}} is called.}
+    the function \code{\link[nnet]{nnet}} is called.}
   \item{sizenet}{
     the number of units in the hidden layer. Defaults to 5. Can be zero
-    if there are no skip-layer units. See \code{\link{nnet}} for more
+    if there are no skip-layer units. See \code{\link[nnet]{nnet}} for more
     details.}
   \item{lambda}{
     a numeric vector or a single value indicating the weight decay when
-    \code{method} is \code{"neuralnet"}. See \code{\link{nnet}} for more
+    \code{method} is \code{"neuralnet"}. See \code{\link[nnet]{nnet}} for more
     details. By default, 0.0001, 0.001, or 0.01 is randomly chosen for
     each of the networks.}
   \item{trace}{
     logical, if \code{TRUE} switches on tracing the optimization of
-    \code{\link{nnet}}. Applies only when \code{method} is
+    \code{\link[nnet]{nnet}}. Applies only when \code{method} is
     \code{"neuralnet"}.}
   \item{maxit}{
     numeric, the maximum number of iterations. Defaults to 500. Applies
     only when \code{method} is \code{"neuralnet"}. See also
-    \code{\link{nnet}}.}
+    \code{\link[nnet]{nnet}}.}
   \item{\dots}{
-    other arguments passed to \code{\link{nnet}}.}
+    other arguments passed to \code{\link[nnet]{nnet}}.}
 }
 \value{
   The returned value is an object of class \code{"abc"}, containing the
@@ -92,7 +92,7 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
     \code{"loclinear"}, \code{"neuralnet"} or \code{"ridge"}.}
   \item{residuals}{The residuals from the regression when \code{method} is
     \code{"loclinear"}, \code{"neuralnet"} or \code{"ridge"}. These are the "raw"
-    residuals from \code{\link{lsfit}} or \code{\link{nnet}},
+    residuals from \code{\link{lsfit}} or \code{\link[nnet]{nnet}},
     respectively, thus they are not on the original scale of the
     parameter(s).}
   \item{dist}{The Euclidean distances for the accepted simulations.}
@@ -153,16 +153,16 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
   method that performs local-linear ridge regression and deals with the
   collinearity issue.  The non-linear regression correction method
   (\code{"neuralnet"}) uses a non-linear regression to minimize the
-  departure from non-linearity using the function \code{\link{nnet}}.
+  departure from non-linearity using the function \code{\link[nnet]{nnet}}.
   The posterior samples of parameters based on the rejection algorithm
   are returned as well, even when one of the regression algorithms is
   used.
   
   Several additional arguments can be specified when \code{method} is
   \code{"neuralnet"}. The method is based on the function
-  \code{\link{nnet}} from the library \code{\link{nnet}}, which fits
+  \code{\link[nnet]{nnet}} from the library \code{\link[nnet]{nnet}}, which fits
   single-hidden-layer neural networks. \code{numnet} defines the
-  number of neural networks, thus the function \code{\link{nnet}} is
+  number of neural networks, thus the function \code{\link[nnet]{nnet}} is
   called \code{numnet} number of times. Predictions from different
   neural networks can be rather different, so the median of the
   predictions from all neural networks is used to provide a global
@@ -176,7 +176,7 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
   units, but they are often unreliable. Generally speaking, the optimal
   choice of \code{sizenet} depends on the dimensionality, thus the
   number of statistics in \code{sumstat}. It can be zero when there are
-  no skip-layer units. See also \code{\link{nnet}} for more details. The
+  no skip-layer units. See also \code{\link[nnet]{nnet}} for more details. The
   \code{method} \code{"neuralnet"} is recommended when dealing with a
   large number of summary statistics.
 
@@ -227,7 +227,7 @@ logit.bounds, subset = NULL, kernel = "epanechnikov", numnet =
 }
 \seealso{
   \code{\link{summary.abc}}, \code{\link{hist.abc}},
-  \code{\link{plot.abc}}, \code{\link{lsfit}}, \code{\link{nnet}},
+  \code{\link{plot.abc}}, \code{\link{lsfit}}, \code{\link[nnet]{nnet}},
   \code{\link{cv4abc}}
 }
 \examples{

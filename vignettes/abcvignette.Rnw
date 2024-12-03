@@ -29,16 +29,16 @@
 \begin{document}
 
 % <<label=R options,echo=FALSE>>=
-% options(width = 60)
-% options(SweaveHooks = list(fig = function() par(mar=c(3,3,1,0.5),mgp = c(2,1,0))))
-% @
+options(width = 60)
+options(SweaveHooks = list(fig = function() par(mar=c(3,3,1,0.5),mgp = c(2,1,0))))
+@
 
-%\SweaveOpts{prefix.string=fig,include=F,keep.source=T,eps=FALSE}
+\SweaveOpts{prefix.string=fig,include=F,keep.source=T,eps=FALSE,resolution=72}
 
-% <<echo=false>>=
-% options(continue="  ")
-% @
-% %@% TO ELIMINATE THE "+" IN CONSECUTIVE SCRIPT LINES
+<<echo=false>>=
+options(continue="  ")
+@
+%@% TO ELIMINATE THE "+" IN CONSECUTIVE SCRIPT LINES
 
 \title{Approximate Bayesian Computation (ABC) in R: A Vignette}
 \author{K Csill\'ery, L Lemaire, O Fran\c cois, MGB Blum}

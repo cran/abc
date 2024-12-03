@@ -46,23 +46,23 @@ subset = NULL, kernel = "epanechnikov", numnet = 10, sizenet = 5, lambda
     the function \code{nnet} is called.}
   \item{sizenet}{
     the number of units in the hidden layer. Defaults to 5. Can be zero
-    if there are no skip-layer units. See \code{\link{nnet}} for more
+    if there are no skip-layer units. See \code{\link[nnet]{nnet}} for more
     details.}
   \item{lambda}{
     a numeric vector or a single value indicating the weight decay when
-    \code{method} is \code{"neuralnet"}. See \code{\link{nnet}} for more
+    \code{method} is \code{"neuralnet"}. See \code{\link[nnet]{nnet}} for more
     details. By default, 0.0001, 0.001, or 0.01 is randomly chosen for
     each of the networks.}
   \item{trace}{
     logical, \code{TRUE} switches on tracing the optimization of
-    \code{\link{nnet}}. Applies only when \code{method} is
+    \code{\link[nnet]{nnet}}. Applies only when \code{method} is
     \code{"neuralnet"}.}
   \item{maxit}{
     numeric, the maximum number of iterations. Defaults to 500. Applies
     only when \code{method} is \code{"neuralnet"}. See also
-    \code{\link{nnet}}.}
+    \code{\link[nnet]{nnet}}.}
   \item{\dots}{
-    other arguments passed to \code{\link{nnet}}.}
+    other arguments passed to \code{\link[nnet]{nnet}}.}
 }
 \details{
   For each model, a simulation is selected repeatedly to be a validation

@@ -50,15 +50,15 @@ c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
   \item{lambda}{
     a numeric vector or a single value indicating the weight decay when
     method is \code{"neuralnet"}. By default, 0.0001, 0.001, or 0.01 is
-    randomly chosen for the each of the networks. See \code{\link{nnet}}
+    randomly chosen for the each of the networks. See \code{\link[nnet]{nnet}}
     for more details.}
   \item{trace}{
     logical, \code{TRUE} switches on tracing the
-    optimization of \code{\link{nnet}} (applies when method is
+    optimization of \code{\link[nnet]{nnet}} (applies when method is
     \code{"neuralnet"}).}
   \item{maxit}{
     numeric, the maximum number of iterations. Defaults to 500. See also
-    \code{\link{nnet}}.}
+    \code{\link[nnet]{nnet}}.}
   \item{\dots}{
     other arguments passed on from \code{nnet}.}
 }
@@ -99,10 +99,10 @@ c(0.0001,0.001,0.01), trace = TRUE, maxit = 500, ...)
   equally likely, and the same number of simulations is performed for
   each model. When method is \code{"mnlogistic"} the posterior model
   probabilities are estimated using a multinomial logistic regression as
-  implemented in the function \code{\link{multinom}} from the package
-  \code{\link{nnet}}. When method is \code{"neuralnet"}, neural networks
+  implemented in the function \code{\link[nnet]{multinom}} from the package
+  \code{\link[nnet]{nnet}}. When method is \code{"neuralnet"}, neural networks
   are used to predict the probabilities of models based on the observed
-  statistics using \code{\link{nnet}}. This method can be useful if many
+  statistics using \code{\link[nnet]{nnet}}. This method can be useful if many
   summary statistics are used.
   
   Names for the summary statistics are strongly recommended. Names can
